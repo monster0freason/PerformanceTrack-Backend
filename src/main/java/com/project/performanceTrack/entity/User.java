@@ -11,7 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-// User entity - represents employees, managers, and admins
+
 @Entity
 @Table(name = "users")
 @Data
@@ -40,7 +40,7 @@ public class User {
     @Column(length = 50)
     private String department;
 
-    // Self-referencing FK - employee's manager
+
     @ManyToOne
     @JoinColumn(name = "manager_id")
     private User manager;
