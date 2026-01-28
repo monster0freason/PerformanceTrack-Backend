@@ -1,10 +1,10 @@
-package com.performancetrack;
+package com.project.performanceTrack;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DemoApplicationTests {
+class PerformanceTrackApplicationTests {
 
 	@Test
 	void contextLoads() {
