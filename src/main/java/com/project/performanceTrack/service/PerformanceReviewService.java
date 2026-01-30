@@ -220,5 +220,53 @@ public class PerformanceReviewService {
         return saved;
     }
 
+    //acknowledge review (Employee)
+    public PerformanceReview acknowledgeReview(Integer reviewId, Integer empId, String response){
+        PerformanceReview review = getReviewById(reviewId);
 
+        // Check authorization
+        if (!review.getUser().getUserId().equals(empId)) {
+            throw new UnauthorizedException("Not authorized");
+        }
+
+        // Check if review is completed
+        if (review.getStatus() != PerformanceReviewStatus.COMPLETED) {
+            throw new BadRequestException("Review not completed");
+        }
+
+        //update review
+        User emp = userRepo.findById(empId).orElse(null);
+        review.setAcknowledgedBy(emp);
+        review.setAcknowledgedDate(LocalDateTime.now());
+        review.setEmployeeResponse(response);
+        review.setStatus(PerformanceReviewStatus.COMPLETED_AND_ACKNOWLEDGED);
+
+        //save review
+        PerformanceReview saved = reviewRepo.save(review);
+
+        // Notify manager
+        if (review.getUser().getManager() != null) {
+            Notification notif = new Notification();
+            notif.setUser(review.getUser().getManager());
+            notif.setType(NotificationType.REVIEW_ACKNOWLEDGED);
+            notif.setMessage(review.getUser().getName() + " acknowledged their review");
+            notif.setRelatedEntityType("PerformanceReview");
+            notif.setRelatedEntityId(reviewId);
+            notif.setStatus(NotificationStatus.UNREAD);
+            notifRepo.save(notif);
+        }
+        // Audit log
+        AuditLog log = new AuditLog();
+        log.setUser(emp);
+        log.setAction("REVIEW_ACKNOWLEDGED");
+        log.setDetails("Acknowledged performance review");
+        log.setRelatedEntityType("PerformanceReview");
+        log.setRelatedEntityId(reviewId);
+        log.setStatus("SUCCESS");
+        log.setTimestamp(LocalDateTime.now());
+        auditRepo.save(log);
+
+        return saved;
+
+    }
 }
