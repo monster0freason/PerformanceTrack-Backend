@@ -48,6 +48,15 @@ public class PerformanceReviewController {
         return ApiResponse.success("Review retrieved", review);
 
     }
+    // Submit self-assessment (Employee)
+    @PostMapping
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ApiResponse<PerformanceReview> submitSelfAssessment(@Valid @RequestBody SelfAssessmentRequest req,
+                                                               HttpServletRequest httpReq) {
+        Integer empId = (Integer) httpReq.getAttribute("userId");
+        PerformanceReview review = reviewSvc.submitSelfAssessment(req, empId);
+        return ApiResponse.success("Self-assessment submitted", review);
+    }
 
     // Update self-assessment draft (Employee)
     @PutMapping("/{reviewId}/draft")
