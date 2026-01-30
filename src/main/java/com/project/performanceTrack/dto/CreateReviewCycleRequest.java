@@ -11,19 +11,19 @@ import java.time.LocalDate;
 @Data
 public class CreateReviewCycleRequest {
 
-    @NotBlank(message = "Title is required");
+    @NotBlank(message = "Title is required")
     private String title;
 
-    @NotNull(message = "Start date is required");
+    @NotNull(message = "Start date is required")
     private LocalDate startDt;
 
-    @NotNull(message = "End date is required");
+    @NotNull(message = "End date is required")
     private LocalDate endDt;
 
-    @NotNull(message = "Status is required");
+    @NotNull(message = "Status is required")
     private ReviewCycleStatus status;
 
-    private Boolean reqComAppr = true; // Requires completion approval
+    private Boolean reqCompAppr = true;  // Requires completion approval
 
-    private  Boolean evReq = true; //requires evidence
+    private Boolean evReq = true;        // Evidence required
 }
