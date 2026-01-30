@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/performance-reviews")
@@ -70,6 +71,18 @@ public class PerformanceReviewController {
         Integer mgrId = (Integer) httpReq.getAttribute("userId");
         PerformanceReview review = reviewSvc.submitManagerReview(reviewId, req, mgrId);
         return ApiResponse.success("Manager review submitted", review);
+    }
+
+    // Acknowledge review (Employee)
+    @PostMapping("/{reviewId}/acknowledge")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ApiResponse<PerformanceReview> acknowledgeReview(@PathVariable Integer reviewId,
+                                                            @RequestBody Map<String, String> body,
+                                                            HttpServletRequest httpReq) {
+        Integer empId = (Integer) httpReq.getAttribute("userId");
+        String response = body.get("response");
+        PerformanceReview review = reviewSvc.acknowledgeReview(reviewId, empId, response);
+        return ApiResponse.success("Review acknowledged", review);
     }
 
 
