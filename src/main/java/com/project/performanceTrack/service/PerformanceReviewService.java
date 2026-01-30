@@ -1,5 +1,6 @@
 package com.project.performanceTrack.service;
 
+import com.project.performanceTrack.dto.ManagerReviewRequest;
 import com.project.performanceTrack.dto.SelfAssessmentRequest;
 import com.project.performanceTrack.entity.*;
 import com.project.performanceTrack.enums.GoalStatus;
@@ -166,5 +167,58 @@ public class PerformanceReviewService {
     }
 
    // submit manager review (Manager)
+    public  PerformanceReview submitManagerReview(Integer reviewId, ManagerReviewRequest req, Integer mgrId){
+        PerformanceReview review = getReviewById(reviewId);
+
+        //check authorization
+        if (!review.getUser().getManager().getUserId().equals(mgrId)) {
+            throw new UnauthorizedException("Not authorized");
+        }
+
+        // Check if self-assessment is completed
+        if (review.getStatus() != PerformanceReviewStatus.SELF_ASSESSMENT_COMPLETED) {
+            throw new BadRequestException("Self-assessment not completed");
+        }
+
+        //update review
+        User mgr = userRepo.findById(mgrId).orElse(null);
+        review.setManagerFeedback(req.getMgrFb());
+        review.setManagerRating(req.getMgrRating());
+        review.setRatingJustification(req.getRatingJust());
+        review.setCompensationRecommendations(req.getCompRec());
+        review.setNextPeriodGoals(req.getNextGoals());
+        review.setReviewedBy(mgr);
+        review.setReviewCompletedDate(LocalDateTime.now());
+        review.setStatus(PerformanceReviewStatus.COMPLETED);
+
+        //save review
+        PerformanceReview saved = reviewRepo.save(review);
+
+
+        // Notify employee
+        Notification notif = new Notification();
+        notif.setUser(review.getUser());
+        notif.setType(NotificationType.PERFORMANCE_REVIEW_COMPLETED);
+        notif.setMessage("Your performance review has been completed");
+        notif.setRelatedEntityType("PerformanceReview");
+        notif.setRelatedEntityId(reviewId);
+        notif.setStatus(NotificationStatus.UNREAD);
+        notif.setPriority("HIGH");
+        notifRepo.save(notif);
+
+        // Audit log
+        AuditLog log = new AuditLog();
+        log.setUser(mgr);
+        log.setAction("MANAGER_REVIEW_COMPLETED");
+        log.setDetails("Completed review for " + review.getUser().getName());
+        log.setRelatedEntityType("PerformanceReview");
+        log.setRelatedEntityId(reviewId);
+        log.setStatus("SUCCESS");
+        log.setTimestamp(LocalDateTime.now());
+        auditRepo.save(log);
+
+        return saved;
+    }
+
 
 }

@@ -1,6 +1,7 @@
 package com.project.performanceTrack.controller;
 
 import com.project.performanceTrack.dto.ApiResponse;
+import com.project.performanceTrack.dto.ManagerReviewRequest;
 import com.project.performanceTrack.dto.SelfAssessmentRequest;
 import com.project.performanceTrack.entity.PerformanceReview;
 import com.project.performanceTrack.service.PerformanceReviewService;
@@ -60,6 +61,16 @@ public class PerformanceReviewController {
     }
 
 
+    //submit manager review (Manager)
+    @PutMapping("/{reviewId}")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ApiResponse<PerformanceReview> submitManagerReview(@PathVariable Integer reviewId,
+                                                              @Valid @RequestBody ManagerReviewRequest req,
+                                                              HttpServletRequest httpReq){
+        Integer mgrId = (Integer) httpReq.getAttribute("userId");
+        PerformanceReview review = reviewSvc.submitManagerReview(reviewId, req, mgrId);
+        return ApiResponse.success("Manager review submitted", review);
+    }
 
 
 }
