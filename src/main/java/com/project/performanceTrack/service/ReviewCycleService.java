@@ -47,7 +47,7 @@ public class ReviewCycleService {
         cycle.setStartDate(req.getStartDt());
         cycle.setEndDate(req.getEndDt());
         cycle.setStatus(req.getStatus());
-        cycle.setRequiresCompletionApproval(req.getReqComAppr());
+        cycle.setRequiresCompletionApproval(req.getReqCompAppr());
         cycle.setEvidenceRequired(req.getEvReq());
 
         //save cycle
@@ -78,7 +78,7 @@ public class ReviewCycleService {
         cycle.setStartDate(req.getStartDt());
         cycle.setEndDate(req.getEndDt());
         cycle.setStatus(req.getStatus());
-        cycle.setRequiresCompletionApproval(req.getReqComAppr());
+        cycle.setRequiresCompletionApproval(req.getReqCompAppr());
         cycle.setEvidenceRequired(req.getEvReq());
 
         //save cycle
