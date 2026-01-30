@@ -27,9 +27,9 @@ public class ReviewCycleController {
 
     //get cycle by id
     @GetMapping("/{cycleId}")
-    public ApiResponse<ReviewCycle> getCycleById(){
-        List<ReviewCycle> cycles = cycleSvc.getCycleById();
-        return ApiResponse.success("Review cycle retrieved", cycles);
+    public ApiResponse<ReviewCycle> getCycleById(@PathVariable Integer cycleId) {
+        ReviewCycle cycle = cycleSvc.getCycleById(cycleId);
+        return ApiResponse.success("Review cycle retrieved", cycle);
     }
 
     // Get active cycle
