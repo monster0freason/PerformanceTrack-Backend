@@ -78,6 +78,12 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+        <!-- Model Mapper -->
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>3.2.0</version>
+        </dependency>
         <!--  ENV Dependencies  -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>
