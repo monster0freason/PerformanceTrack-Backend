@@ -11,7 +11,7 @@ import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.repository.AuditLogRepository;
 import com.project.performanceTrack.repository.NotificationRepository;
 import com.project.performanceTrack.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,19 +20,16 @@ import java.util.List;
 
 // User management service
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepo;
+    private final UserRepository userRepo;
 
-    @Autowired
-    private PasswordEncoder pwdEncoder;
+    private final PasswordEncoder pwdEncoder;
 
-    @Autowired
-    private NotificationRepository notifRepo;
+    private final NotificationRepository notifRepo;
 
-    @Autowired
-    private AuditLogRepository auditRepo;
+    private final AuditLogRepository auditRepo;
 
     // Get all users
     public List<User> getAllUsers() {
