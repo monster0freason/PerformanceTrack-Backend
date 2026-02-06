@@ -1,19 +1,16 @@
 package com.project.performanceTrack.service;
 
 import com.project.performanceTrack.dto.CreateReviewCycleRequest;
-import com.project.performanceTrack.entity.AuditLog;
 import com.project.performanceTrack.entity.ReviewCycle;
 import com.project.performanceTrack.entity.User;
 import com.project.performanceTrack.enums.ReviewCycleStatus;
 import com.project.performanceTrack.exception.ResourceNotFoundException;
-import com.project.performanceTrack.repository.AuditLogRepository;
 import com.project.performanceTrack.repository.ReviewCycleRepository;
 import com.project.performanceTrack.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,7 +19,7 @@ public class ReviewCycleService {
 
     private final ReviewCycleRepository cycleRepo;
     private final UserRepository userRepo;
-    private final AuditLogRepository auditRepo;
+    private final AuditLogService auditLogService; // Updated
 
     //get all review cycles
     public List<ReviewCycle> getAllCycles(){return cycleRepo.findAll();}
@@ -40,63 +37,40 @@ public class ReviewCycleService {
     }
 
     //create review cycle (Admin)
+    @Transactional
     public ReviewCycle createCycle(CreateReviewCycleRequest req, Integer adminId){
         //create review cycle
         ReviewCycle cycle = new ReviewCycle();
-        cycle.setTitle(req.getTitle());
-        cycle.setStartDate(req.getStartDt());
-        cycle.setEndDate(req.getEndDt());
-        cycle.setStatus(req.getStatus());
-        cycle.setRequiresCompletionApproval(req.getReqCompAppr());
-        cycle.setEvidenceRequired(req.getEvReq());
-
+        mapRequestToEntity(req, cycle);
         //save cycle
         ReviewCycle saved = cycleRepo.save(cycle);
 
         //create audit log
         User admin = userRepo.findById(adminId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(admin);
-        log.setAction("REVIEW_CYCLE_CREATED");
-        log.setDetails("Created review cycle: " + cycle.getTitle());
-        log.setRelatedEntityType("ReviewCycle");
-        log.setRelatedEntityId(saved.getCycleId());
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+
+        auditLogService.logAudit(admin, "REVIEW_CYCLE_CREATED",
+                "Created review cycle: " + cycle.getTitle(), "ReviewCycle", saved.getCycleId(), "SUCCESS");
 
         return saved;
     }
 
     //update review cycle (Admin)
-
+    @Transactional
     public  ReviewCycle updateCycle(Integer cycleId, CreateReviewCycleRequest req, Integer adminId){
         ReviewCycle cycle = getCycleById(cycleId);
-
-        //update the fields
+        mapRequestToEntity(req, cycle);
+        //save cycle
+        ReviewCycle updated = cycleRepo.save(cycle);
+        User admin = userRepo.findById(adminId).orElse(null);
+        auditLogService.logAudit(admin, "REVIEW_CYCLE_UPDATED",
+                "Updated review cycle: " + cycle.getTitle(), "ReviewCycle", cycleId, "SUCCESS");
+        return updated;
+    }
+    private void mapRequestToEntity(CreateReviewCycleRequest req, ReviewCycle cycle) {
         cycle.setTitle(req.getTitle());
         cycle.setStartDate(req.getStartDt());
         cycle.setEndDate(req.getEndDt());
         cycle.setStatus(req.getStatus());
-        cycle.setRequiresCompletionApproval(req.getReqCompAppr());
-        cycle.setEvidenceRequired(req.getEvReq());
-
-        //save cycle
-        ReviewCycle updated = cycleRepo.save(cycle);
-
-        // Create audit log
-        User admin = userRepo.findById(adminId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(admin);
-        log.setAction("REVIEW_CYCLE_UPDATED");
-        log.setDetails("Updated review cycle: " + cycle.getTitle());
-        log.setRelatedEntityType("ReviewCycle");
-        log.setRelatedEntityId(cycleId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
-
-        return updated;
     }
 
 }
