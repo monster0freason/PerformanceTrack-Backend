@@ -20,6 +20,9 @@ public class AuditLogController {
 
     private final AuditLogService auditLogService;
 
+    // Endpoint: GET /api/v1/audit-logs
+    // Access: Strictly restricted to users with the 'ADMIN' role.
+    // Supports optional query parameters for filtering logs by user, action, or date.
     @GetMapping
     public ApiResponse<List<AuditLog>> getAuditLogs(
             @RequestParam(required = false) Integer userId,
@@ -31,6 +34,9 @@ public class AuditLogController {
         return ApiResponse.success("Audit logs retrieved", logs);
     }
 
+    // Endpoint: POST /api/v1/audit-logs/export
+    // Access: Restricted to 'ADMIN' role for data security.
+    // Triggers the generation of an audit report in the requested file format.
     @PostMapping("/export")
     public ApiResponse<String> exportLogs(@RequestBody Map<String, String> body) {
         String format = body.getOrDefault("format", "CSV");
