@@ -12,6 +12,7 @@ import com.project.performanceTrack.repository.UserRepository;
 import com.project.performanceTrack.repository.AuditLogRepository;
 import com.project.performanceTrack.repository.GoalRepository;
 import com.project.performanceTrack.repository.PerformanceReviewRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,22 +24,23 @@ import java.util.ArrayList;
 
 // Report service - handles report generation
 @Service
+@RequiredArgsConstructor
 public class ReportService {
 
-    @Autowired
-    private ReportRepository reportRepo;
 
-    @Autowired
-    private UserRepository userRepo;
+    private final ReportRepository reportRepo;
 
-    @Autowired
-    private AuditLogRepository auditRepo;
 
-    @Autowired
-    private GoalRepository goalRepo;
+    private final UserRepository userRepo;
 
-    @Autowired
-    private PerformanceReviewRepository reviewRepo;
+
+    private final AuditLogRepository auditRepo;
+
+
+    private final GoalRepository goalRepo;
+
+
+    private final PerformanceReviewRepository reviewRepo;
 
     // Get all reports
     public List<Report> getAllReports() {

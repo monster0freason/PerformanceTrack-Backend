@@ -4,6 +4,7 @@ import com.project.performanceTrack.dto.ApiResponse;
 import com.project.performanceTrack.entity.Report;
 import com.project.performanceTrack.service.ReportService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -11,14 +12,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+
 // Report controller (Admin/Manager)
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/reports")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 public class ReportController {
 
-    @Autowired
-    private ReportService reportSvc;
+
+    private final ReportService reportSvc;
 
     // Get all reports
     @GetMapping
@@ -65,7 +68,7 @@ public class ReportController {
         return ApiResponse.success("Performance summary retrieved", summary);
     }
 
-    // Get goal analytics
+    // Get goal analyticsv
     @GetMapping("/goal-analytics")
     public ApiResponse<Map<String, Object>> getGoalAnalytics() {
         Map<String, Object> analytics = reportSvc.getGoalAnalytics();
