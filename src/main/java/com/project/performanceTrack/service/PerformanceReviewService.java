@@ -11,6 +11,7 @@ import com.project.performanceTrack.exception.BadRequestException;
 import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,27 +19,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PerformanceReviewService {
-    @Autowired
-    private PerformanceReviewRepository reviewRepo;
 
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
-    private ReviewCycleRepository cycleRepo;
-
-    @Autowired
-    private NotificationRepository notifRepo;
-
-    @Autowired
-    private AuditLogRepository auditRepo;
-
-    @Autowired
-    private PerformanceReviewGoalsRepository reviewGoalsRepo;
-
-    @Autowired
-    private GoalRepository goalRepo;
+    private final PerformanceReviewRepository reviewRepo;
+    private final UserRepository userRepo;
+    private final ReviewCycleRepository cycleRepo;
+    private final NotificationRepository notifRepo;
+    private final AuditLogRepository auditRepo;
+    private final PerformanceReviewGoalsRepository reviewGoalsRepo;
+    private final GoalRepository goalRepo;
 
     //get reviews by user
     public List<PerformanceReview> getReviewsByUser(Integer userId){
