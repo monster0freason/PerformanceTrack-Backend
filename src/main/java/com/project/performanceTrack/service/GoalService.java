@@ -9,6 +9,7 @@ import com.project.performanceTrack.exception.BadRequestException;
 import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,25 +18,20 @@ import java.util.List;
 
 // Goal management service
 @Service
+@RequiredArgsConstructor
 public class GoalService {
 
-    @Autowired
-    private GoalRepository goalRepo;
+    private final GoalRepository goalRepo;
 
-    @Autowired
-    private UserRepository userRepo;
+    private final UserRepository userRepo;
 
-    @Autowired
-    private NotificationRepository notifRepo;
+    private final NotificationRepository notifRepo;
 
-    @Autowired
-    private AuditLogRepository auditRepo;
+    private final AuditLogRepository auditRepo;
 
-    @Autowired
-    private FeedbackRepository fbRepo;
+    private final FeedbackRepository fbRepo;
 
-    @Autowired
-    private GoalCompletionApprovalRepository approvalRepo;
+    private final GoalCompletionApprovalRepository approvalRepo;
 
     // Create new goal (Employee)
     public Goal createGoal(CreateGoalRequest req, Integer empId) {
