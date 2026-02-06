@@ -1,18 +1,16 @@
 package com.project.performanceTrack.service;
-
 import com.project.performanceTrack.dto.ManagerReviewRequest;
 import com.project.performanceTrack.dto.SelfAssessmentRequest;
 import com.project.performanceTrack.entity.*;
 import com.project.performanceTrack.enums.GoalStatus;
-import com.project.performanceTrack.enums.NotificationStatus;
 import com.project.performanceTrack.enums.NotificationType;
 import com.project.performanceTrack.enums.PerformanceReviewStatus;
 import com.project.performanceTrack.exception.BadRequestException;
 import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,10 +23,11 @@ public class PerformanceReviewService {
     private final PerformanceReviewRepository reviewRepo;
     private final UserRepository userRepo;
     private final ReviewCycleRepository cycleRepo;
-    private final NotificationRepository notifRepo;
     private final AuditLogRepository auditRepo;
     private final PerformanceReviewGoalsRepository reviewGoalsRepo;
     private final GoalRepository goalRepo;
+    private final AuditLogService auditLogService; //updated
+    private final NotificationService notificationService;
 
     //get reviews by user
     public List<PerformanceReview> getReviewsByUser(Integer userId){
@@ -47,6 +46,7 @@ public class PerformanceReviewService {
     }
 
     //submit self-assessment (Employee)
+    @Transactional
     public PerformanceReview submitSelfAssessment(SelfAssessmentRequest req, Integer empId){
         //get employee
         User emp = userRepo.findById(empId)
@@ -90,36 +90,22 @@ public class PerformanceReviewService {
             reviewGoalsRepo.save(link);
         }
 
-        //notify manager
-        if(emp.getManager() != null){
-            Notification notif = new Notification();
-            notif.setUser(emp.getManager());
-            notif.setType(NotificationType.SELF_ASSESSMENT_SUBMITTED);
-            notif.setMessage(emp.getName() + "submitted self-assessment");
-            notif.setRelatedEntityType("PerformanceReview");
-            notif.setRelatedEntityId(saved.getReviewId());
-            notif.setStatus(NotificationStatus.UNREAD);
-            notif.setPriority("HIGH");
-            notif.setActionRequired(true);
-            notifRepo.save(notif);
+        // Notifications using service class
+        if (emp.getManager() != null) {
+            notificationService.sendNotification(emp.getManager(), NotificationType.SELF_ASSESSMENT_SUBMITTED,
+                    emp.getName() + " submitted self-assessment", "PerformanceReview", saved.getReviewId(), "HIGH", true);
         }
 
-        // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("SELF_ASSESSMENT_SUBMITTED");
-        log.setDetails("Submitted self-assessment for " + cycle.getTitle());
-        log.setRelatedEntityType("PerformanceReview");
-        log.setRelatedEntityId(saved.getReviewId());
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
 
+        // Centralized audit log
+        auditLogService.logAudit(emp, "SELF_ASSESSMENT_SUBMITTED",
+                "Submitted self-assessment for " + cycle.getTitle(), "PerformanceReview", saved.getReviewId(), "SUCCESS");
         return saved;
 
     }
 
     //update self-assessment draft (Employee)
+    @Transactional
     public PerformanceReview updateSelfAssessmentDraft(Integer reviewId, SelfAssessmentRequest req, Integer empId){
         PerformanceReview review = getReviewById(reviewId);
 
@@ -140,23 +126,16 @@ public class PerformanceReviewService {
 
         //save without changing status
         PerformanceReview updated = reviewRepo.save(review);
-
-        // Audit log
         User emp = userRepo.findById(empId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("SELF_ASSESSMENT_DRAFT_UPDATED");
-        log.setDetails("Updated self-assessment draft");
-        log.setRelatedEntityType("PerformanceReview");
-        log.setRelatedEntityId(reviewId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        //auditLog
+        auditLogService.logAudit(emp, "SELF_ASSESSMENT_DRAFT_UPDATED",
+                "Updated self-assessment draft", "PerformanceReview", reviewId, "SUCCESS");
 
         return updated;
     }
 
    // submit manager review (Manager)
+    @Transactional
     public  PerformanceReview submitManagerReview(Integer reviewId, ManagerReviewRequest req, Integer mgrId){
         PerformanceReview review = getReviewById(reviewId);
 
@@ -184,33 +163,17 @@ public class PerformanceReviewService {
         //save review
         PerformanceReview saved = reviewRepo.save(review);
 
+        notificationService.sendNotification(review.getUser(), NotificationType.PERFORMANCE_REVIEW_COMPLETED,
+                "Your performance review has been completed", "PerformanceReview", reviewId, "HIGH", false);
 
-        // Notify employee
-        Notification notif = new Notification();
-        notif.setUser(review.getUser());
-        notif.setType(NotificationType.PERFORMANCE_REVIEW_COMPLETED);
-        notif.setMessage("Your performance review has been completed");
-        notif.setRelatedEntityType("PerformanceReview");
-        notif.setRelatedEntityId(reviewId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notif.setPriority("HIGH");
-        notifRepo.save(notif);
-
-        // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("MANAGER_REVIEW_COMPLETED");
-        log.setDetails("Completed review for " + review.getUser().getName());
-        log.setRelatedEntityType("PerformanceReview");
-        log.setRelatedEntityId(reviewId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        auditLogService.logAudit(mgr, "MANAGER_REVIEW_COMPLETED",
+                "Completed review for " + review.getUser().getName(), "PerformanceReview", reviewId, "SUCCESS");
 
         return saved;
     }
 
     //acknowledge review (Employee)
+    @Transactional
     public PerformanceReview acknowledgeReview(Integer reviewId, Integer empId, String response){
         PerformanceReview review = getReviewById(reviewId);
 
@@ -234,27 +197,14 @@ public class PerformanceReviewService {
         //save review
         PerformanceReview saved = reviewRepo.save(review);
 
-        // Notify manager
+        // Use NotificationService
         if (review.getUser().getManager() != null) {
-            Notification notif = new Notification();
-            notif.setUser(review.getUser().getManager());
-            notif.setType(NotificationType.REVIEW_ACKNOWLEDGED);
-            notif.setMessage(review.getUser().getName() + " acknowledged their review");
-            notif.setRelatedEntityType("PerformanceReview");
-            notif.setRelatedEntityId(reviewId);
-            notif.setStatus(NotificationStatus.UNREAD);
-            notifRepo.save(notif);
+            notificationService.sendNotification(review.getUser().getManager(), NotificationType.REVIEW_ACKNOWLEDGED,
+                    review.getUser().getName() + " acknowledged their review", "PerformanceReview", reviewId, "NORMAL", false);
         }
-        // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("REVIEW_ACKNOWLEDGED");
-        log.setDetails("Acknowledged performance review");
-        log.setRelatedEntityType("PerformanceReview");
-        log.setRelatedEntityId(reviewId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        //audit log
+        auditLogService.logAudit(emp, "REVIEW_ACKNOWLEDGED",
+                "Acknowledged performance review", "PerformanceReview", reviewId, "SUCCESS");
 
         return saved;
 
