@@ -6,6 +6,7 @@ import com.project.performanceTrack.entity.ReviewCycle;
 import com.project.performanceTrack.service.ReviewCycleService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/review-cycles")
+@RequiredArgsConstructor
 public class ReviewCycleController {
-    @Autowired
-    private ReviewCycleService cycleSvc;
+
+    private final ReviewCycleService cycleSvc;
 
     //get all review cycles
     @GetMapping

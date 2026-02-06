@@ -7,6 +7,7 @@ import com.project.performanceTrack.entity.PerformanceReview;
 import com.project.performanceTrack.service.PerformanceReviewService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +17,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/performance-reviews")
+@RequiredArgsConstructor
 public class PerformanceReviewController {
-    @Autowired
-    private PerformanceReviewService reviewSvc;
+
+    private final PerformanceReviewService reviewSvc;
 
     //get reviews
     @GetMapping

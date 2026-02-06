@@ -9,6 +9,7 @@ import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.repository.AuditLogRepository;
 import com.project.performanceTrack.repository.ReviewCycleRepository;
 import com.project.performanceTrack.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +17,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ReviewCycleService {
-    @Autowired
-    private ReviewCycleRepository cycleRepo;
-    @Autowired
-    private UserRepository userRepo;
-    @Autowired
-    private AuditLogRepository auditRepo;
+
+    private final ReviewCycleRepository cycleRepo;
+    private final UserRepository userRepo;
+    private final AuditLogRepository auditRepo;
 
     //get all review cycles
     public List<ReviewCycle> getAllCycles(){return cycleRepo.findAll();}
