@@ -19,20 +19,27 @@ public class UserService {
 
     private final UserRepository userRepo;
     private final PasswordEncoder pwdEncoder;
-
-    // Injecting our new specialized services
     private final NotificationService notificationService;
     private final AuditLogService auditLogService;
 
+    // Retrieves a complete list of all users from the database.
+    // Primarily used by administrative dashboards for user oversight.
+    // Returns a list of User entities.
     public List<User> getAllUsers() {
         return userRepo.findAll();
     }
 
+    // Fetches a specific user's details based on their unique numeric ID.
+    // Throws a ResourceNotFoundException if the user does not exist in the system.
+    // Returns the found User entity.
     public User getUserById(Integer userId) {
         return userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
+    // Validates email uniqueness, encodes the password, and creates a new user record.
+    // Triggers a welcome notification and creates an audit log entry for the admin action.
+    // Uses @Transactional to ensure the user, notification, and log are all saved or none are.
     @Transactional
     public User createUser(CreateUserRequest req, Integer adminId) {
         if (userRepo.findByEmail(req.getEmail()).isPresent()) {
@@ -55,7 +62,6 @@ public class UserService {
 
         User savedUser = userRepo.save(user);
 
-        // 1. Use the new Notification Service
         notificationService.sendNotification(
                 savedUser,
                 NotificationType.ACCOUNT_CREATED,
@@ -66,7 +72,6 @@ public class UserService {
                 false
         );
 
-        // 2. Use the new Audit Log Service
         User admin = userRepo.findById(adminId).orElse(null);
         auditLogService.logAudit(
                 admin,
@@ -80,10 +85,16 @@ public class UserService {
         return savedUser;
     }
 
+    // Queries the repository for all users associated with a specific manager's ID.
+    // Useful for organizational hierarchy views and performance management.
+    // Returns a filtered list of User entities.
     public List<User> getTeamMembers(Integer mgrId) {
         return userRepo.findByManager_UserId(mgrId);
     }
 
+    // Updates existing user profile information like name, department, or status.
+    // Automatically generates an audit log to track modifications made by the administrator.
+    // Ensures data consistency by wrapping the update and logging in a transaction.
     @Transactional
     public User updateUser(Integer userId, CreateUserRequest req, Integer adminId) {
         User user = userRepo.findById(userId)
@@ -102,7 +113,6 @@ public class UserService {
 
         User updated = userRepo.save(user);
 
-        // 2. Use the new Audit Log Service
         User admin = userRepo.findById(adminId).orElse(null);
         auditLogService.logAudit(
                 admin,
