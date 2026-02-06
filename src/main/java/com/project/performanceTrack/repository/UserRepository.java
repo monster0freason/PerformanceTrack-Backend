@@ -28,3 +28,4 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // Find team members by manager ID
     List<User> findByManager_UserId(Integer managerId);
 }
+
