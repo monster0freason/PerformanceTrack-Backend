@@ -16,7 +16,9 @@ import java.util.List;
 public class FeedbackController {
 
     private final FeedbackService feedbackService;
-
+    /**
+     * Fetches feedback entries with optional filtering by goal or review ID.
+     */
     @GetMapping
     public ApiResponse<List<FeedbackResponseDTO>> getFeedback(
             @RequestParam(required = false) Integer goalId,
@@ -25,6 +27,9 @@ public class FeedbackController {
         return ApiResponse.success("Feedback retrieved", feedbackService.getFilteredFeedback(goalId, reviewId));
     }
 
+    /**
+     * Creates a new feedback entry using the request body and the authenticated user ID from the request attributes.
+     */
     @PostMapping
     public ApiResponse<FeedbackResponseDTO> createFeedback(
             @RequestBody FeedbackRequest request,

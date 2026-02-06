@@ -6,6 +6,8 @@ import com.project.performanceTrack.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,8 +19,13 @@ public class FeedbackService {
     private final UserRepository userRepo;
     private final GoalRepository goalRepo;
     private final PerformanceReviewRepository reviewRepo;
+    private final AuditLogService auditLogService;
     private final ModelMapper modelMapper;
 
+    /**
+     * Retrieves a list of feedback records filtered by Goal ID or Review ID
+     * Or else it'll return everything if no filters are provided.
+     */
     public List<FeedbackResponseDTO> getFilteredFeedback(Integer goalId, Integer reviewId) {
         List<Feedback> feedbackList;
         if (goalId != null) feedbackList = fbRepo.findByGoal_GoalId(goalId);
@@ -29,7 +36,12 @@ public class FeedbackService {
                 .map(fb -> modelMapper.map(fb, FeedbackResponseDTO.class))
                 .toList();
     }
-
+    /**
+     * Persists a new feedback entry, associates it with the providing user and target entity.
+     * And records the action in the audit log.
+    **/
+    //Ensures both feedback and audit log save together
+    @Transactional
     public FeedbackResponseDTO saveFeedback(Integer userId, FeedbackRequest request) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -50,7 +62,19 @@ public class FeedbackService {
                     .orElseThrow(() -> new RuntimeException("Review not found with ID " + request.getReviewId()));
             fb.setReview(review);
         }
+        //Saves the feedback entity to get the ID first
+        Feedback savedFb = fbRepo.save(fb);
 
-        return modelMapper.map(fbRepo.save(fb), FeedbackResponseDTO.class);
+        //Log the audit event using pre-defined service method
+        auditLogService.logAudit(
+                user,
+                "FEEDBACK_CREATED",
+                "Created feedback for " + (request.getGoalId() != null ? "Goal ID: " + request.getGoalId() : "Review ID: " + request.getReviewId()),
+                "Feedback",
+                savedFb.getFeedbackId(), // Assuming your Feedback entity uses feedbackId
+                "SUCCESS"
+        );
+
+        return modelMapper.map(savedFb, FeedbackResponseDTO.class);
     }
 }

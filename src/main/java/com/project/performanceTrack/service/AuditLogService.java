@@ -16,6 +16,9 @@ public class AuditLogService {
 
     private final AuditLogRepository auditRepo;
 
+    // Filters and retrieves audit logs based on user ID, action type, or date range.
+    // Supports various search criteria to help admins investigate system activities.
+    // Returns a list of AuditLog entities ordered by the most recent timestamp.
     public List<AuditLog> getAuditLogs(Integer userId, String action, LocalDateTime startDt, LocalDateTime endDt) {
         if (userId != null) {
             return auditRepo.findByUser_UserIdOrderByTimestampDesc(userId);
@@ -28,6 +31,9 @@ public class AuditLogService {
         }
     }
 
+    // Creates and persists a new audit record documenting a specific system event.
+    // Captures details such as the actor, the action, the target entity, and the outcome.
+    // Annotated with @Transactional to ensure the log is reliably saved.
     @Transactional
     public void logAudit(User user, String action, String details,
                          String entityType, Integer entityId, String status) {
@@ -42,8 +48,10 @@ public class AuditLogService {
         auditRepo.save(log);
     }
 
+    // Prepares an export path for audit logs in a specified file format (e.g., CSV).
+    // Generates a unique filename based on the current timestamp to avoid collisions.
+    // Returns the string path where the generated export file will be located.
     public String initiateExport(String format) {
-        // Logic for actual file generation would go here
         return "/exports/audit_logs_" + System.currentTimeMillis() + "." + format.toLowerCase();
     }
 }

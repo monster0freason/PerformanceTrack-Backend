@@ -15,7 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class NotificationService {
+public class    NotificationService {
 
     private final NotificationRepository notifRepo;
 

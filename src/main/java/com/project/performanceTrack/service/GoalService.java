@@ -10,8 +10,8 @@ import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,15 +25,16 @@ public class GoalService {
 
     private final UserRepository userRepo;
 
-    private final NotificationRepository notifRepo;
-
     private final AuditLogRepository auditRepo;
 
     private final FeedbackRepository fbRepo;
 
     private final GoalCompletionApprovalRepository approvalRepo;
 
+    private final NotificationService notificationService;
+
     // Create new goal (Employee)
+    @Transactional
     public Goal createGoal(CreateGoalRequest req, Integer empId) {
         // Get employee
         User emp = userRepo.findById(empId)
@@ -64,27 +65,18 @@ public class GoalService {
         Goal savedGoal = goalRepo.save(goal);
 
         // Create notification for manager
-        Notification notif = new Notification();
-        notif.setUser(mgr);
-        notif.setType(NotificationType.GOAL_SUBMITTED);
-        notif.setMessage(emp.getName() + " submitted goal: " + goal.getTitle());
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(savedGoal.getGoalId());
-        notif.setStatus(NotificationStatus.UNREAD);
-        notif.setPriority(req.getPri().name());
-        notif.setActionRequired(true);
-        notifRepo.save(notif);
+        notificationService.sendNotification(
+                mgr,
+                NotificationType.GOAL_SUBMITTED,
+                emp.getName() + " submitted goal: " + goal.getTitle(),
+                "Goal",
+                savedGoal.getGoalId(),
+                req.getPri().name(),
+                true
+        );
 
         // Create audit log
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("GOAL_CREATED");
-        log.setDetails("Created goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(savedGoal.getGoalId());
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(emp, "GOAL_CREATED", "Created goal: " + goal.getTitle(), "Goal", savedGoal.getGoalId());
 
         return savedGoal;
     }
@@ -106,6 +98,7 @@ public class GoalService {
     }
 
     // Approve goal (Manager)
+    @Transactional
     public Goal approveGoal(Integer goalId, Integer mgrId) {
         Goal goal = getGoalById(goalId);
 
@@ -127,31 +120,26 @@ public class GoalService {
         Goal updated = goalRepo.save(goal);
 
         // Notify employee
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedToUser());
-        notif.setType(NotificationType.GOAL_APPROVED);
-        notif.setMessage("Your goal '" + goal.getTitle() + "' has been approved");
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notifRepo.save(notif);
+
+
+        notificationService.sendNotification(
+                goal.getAssignedToUser(),
+                NotificationType.GOAL_APPROVED,
+                "Your goal '" + goal.getTitle() + "' has been approved",
+                "Goal",
+                goalId,
+                goal.getPriority().name(),
+                false
+        );
 
         // Audit log
-        User mgr = userRepo.findById(mgrId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("GOAL_APPROVED");
-        log.setDetails("Approved goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(goal.getAssignedManager(), "GOAL_APPROVED", "Approved goal: " + goal.getTitle(), "Goal", goalId);
 
         return updated;
     }
 
     // Request changes to goal (Manager)
+    @Transactional
     public Goal requestChanges(Integer goalId, Integer mgrId, String comments) {
         Goal goal = getGoalById(goalId);
 
@@ -177,30 +165,24 @@ public class GoalService {
         fbRepo.save(fb);
 
         // Notify employee
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedToUser());
-        notif.setType(NotificationType.GOAL_CHANGE_REQUESTED);
-        notif.setMessage("Changes requested for goal: " + goal.getTitle());
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notifRepo.save(notif);
+        notificationService.sendNotification(
+                goal.getAssignedToUser(),
+                NotificationType.GOAL_CHANGE_REQUESTED,
+                "Changes requested for goal: " + goal.getTitle(),
+                "Goal",
+                goalId,
+                "NORMAL",
+                true
+        );
 
         // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("GOAL_CHANGE_REQUESTED");
-        log.setDetails("Requested changes for goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(mgr, "GOAL_CHANGE_REQUESTED", "Requested changes for goal: " + goal.getTitle(), "Goal", goalId);
 
         return updated;
     }
 
     // Submit goal completion with evidence (Employee)
+    @Transactional
     public Goal submitCompletion(Integer goalId, SubmitCompletionRequest req, Integer empId) {
         Goal goal = getGoalById(goalId);
 
@@ -226,28 +208,18 @@ public class GoalService {
         Goal updated = goalRepo.save(goal);
 
         // Notify manager
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedManager());
-        notif.setType(NotificationType.GOAL_COMPLETION_SUBMITTED);
-        notif.setMessage(goal.getAssignedToUser().getName() + " submitted completion for goal: " + goal.getTitle());
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notif.setPriority("HIGH");
-        notif.setActionRequired(true);
-        notifRepo.save(notif);
+        notificationService.sendNotification(
+                goal.getAssignedManager(),
+                NotificationType.GOAL_COMPLETION_SUBMITTED,
+                goal.getAssignedToUser().getName() + " submitted completion for: " + goal.getTitle(),
+                "Goal",
+                goalId,
+                "HIGH",
+                true
+        );
 
         // Audit log
-        User emp = userRepo.findById(empId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("GOAL_COMPLETION_SUBMITTED");
-        log.setDetails("Submitted completion for goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(goal.getAssignedToUser(), "GOAL_COMPLETION_SUBMITTED", "Submitted completion", "Goal", goalId);
 
         return updated;
     }
@@ -291,26 +263,18 @@ public class GoalService {
         approvalRepo.save(approval);
 
         // Notify employee
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedToUser());
-        notif.setType(NotificationType.GOAL_COMPLETION_APPROVED);
-        notif.setMessage("Your goal '" + goal.getTitle() + "' completion has been approved!");
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notif.setPriority("HIGH");
-        notifRepo.save(notif);
+        notificationService.sendNotification(
+                goal.getAssignedToUser(),
+                NotificationType.GOAL_COMPLETION_APPROVED,
+                "Your goal '" + goal.getTitle() + "' completion has been approved!",
+                "Goal",
+                goalId,
+                "HIGH",
+                false // Action not required as it's a success notification
+        );
 
-        // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("GOAL_COMPLETION_APPROVED");
-        log.setDetails("Approved completion for goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        //Audit Log
+        createAuditLog(mgr, "GOAL_COMPLETION_APPROVED", "Approved completion for goal: " + goal.getTitle(), "Goal", goalId);
 
         return updated;
     }
@@ -332,31 +296,36 @@ public class GoalService {
         Goal updated = goalRepo.save(goal);
 
         // Notify employee
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedToUser());
-        notif.setType(NotificationType.ADDITIONAL_EVIDENCE_REQUIRED);
-        notif.setMessage("Additional evidence needed for goal: " + goal.getTitle());
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notif.setActionRequired(true);
-        notifRepo.save(notif);
+        notificationService.sendNotification(
+                goal.getAssignedToUser(),
+                NotificationType.ADDITIONAL_EVIDENCE_REQUIRED,
+                "Additional evidence needed for goal: " + goal.getTitle(),
+                "Goal",
+                goalId,
+                "NORMAL",
+                true
+        );
 
         // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("ADDITIONAL_EVIDENCE_REQUESTED");
-        log.setDetails("Requested additional evidence for goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(mgr, "ADDITIONAL_EVIDENCE_REQUESTED", "Requested additional evidence", "Goal", goalId);
 
         return updated;
     }
+    // Helper method for Audit Logs to keep code clean
+    private void createAuditLog(User user, String action, String details, String entityType, Integer entityId) {
+        AuditLog log = new AuditLog();
+        log.setUser(user);
+        log.setAction(action);
+        log.setDetails(details);
+        log.setRelatedEntityType(entityType);
+        log.setRelatedEntityId(entityId);
+        log.setStatus("SUCCESS");
+        log.setTimestamp(LocalDateTime.now());
+        auditRepo.save(log);
+    }
 
     // Update goal (Employee - only when changes requested)
+    @Transactional
     public Goal updateGoal(Integer goalId, CreateGoalRequest req, Integer empId) {
         Goal goal = getGoalById(goalId);
 
@@ -383,31 +352,25 @@ public class GoalService {
         Goal updated = goalRepo.save(goal);
 
         // Notify manager
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedManager());
-        notif.setType(NotificationType.GOAL_RESUBMITTED);
-        notif.setMessage(goal.getAssignedToUser().getName() + " updated and resubmitted goal: " + goal.getTitle());
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notifRepo.save(notif);
+
+        notificationService.sendNotification(
+                goal.getAssignedManager(),
+                NotificationType.GOAL_RESUBMITTED,
+                goal.getAssignedToUser().getName() + " updated and resubmitted goal: " + goal.getTitle(),
+                "Goal",
+                goalId,
+                "NORMAL",
+                true
+        );
 
         // Audit log
-        User emp = userRepo.findById(empId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("GOAL_UPDATED");
-        log.setDetails("Updated and resubmitted goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(goal.getAssignedToUser(), "GOAL_UPDATED", "Updated and resubmitted goal: " + goal.getTitle(), "Goal", goalId);
 
         return updated;
     }
 
     // Delete goal (soft delete)
+    @Transactional
     public void deleteGoal(Integer goalId, Integer userId, String role) {
         Goal goal = getGoalById(goalId);
 
@@ -421,19 +384,15 @@ public class GoalService {
         goalRepo.save(goal);
 
         // Audit log
-        User user = userRepo.findById(userId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(user);
-        log.setAction("GOAL_DELETED");
-        log.setDetails("Deleted goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        createAuditLog(user, "GOAL_DELETED", "Deleted goal: " + goal.getTitle(), "Goal", goalId);
+
     }
 
     // Verify evidence (Manager)
+    @Transactional
     public Goal verifyEvidence(Integer goalId, Integer mgrId, String status, String notes) {
         Goal goal = getGoalById(goalId);
 
@@ -453,20 +412,13 @@ public class GoalService {
         Goal updated = goalRepo.save(goal);
 
         // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("EVIDENCE_VERIFIED");
-        log.setDetails("Verified evidence for goal: " + goal.getTitle() + " - Status: " + status);
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(mgr, "EVIDENCE_VERIFIED", "Verified evidence for goal: " + goal.getTitle() + " - Status: " + status, "Goal", goalId);
 
         return updated;
     }
 
     // Reject goal completion (Manager)
+    @Transactional
     public Goal rejectCompletion(Integer goalId, Integer mgrId, String reason) {
         Goal goal = getGoalById(goalId);
 
@@ -495,31 +447,23 @@ public class GoalService {
         approvalRepo.save(approval);
 
         // Notify employee
-        Notification notif = new Notification();
-        notif.setUser(goal.getAssignedToUser());
-        notif.setType(NotificationType.GOAL_COMPLETION_APPROVED);
-        notif.setMessage("Your goal '" + goal.getTitle() + "' completion was rejected. Please review feedback.");
-        notif.setRelatedEntityType("Goal");
-        notif.setRelatedEntityId(goalId);
-        notif.setStatus(NotificationStatus.UNREAD);
-        notif.setPriority("HIGH");
-        notifRepo.save(notif);
-
+        notificationService.sendNotification(
+                goal.getAssignedToUser(),
+                NotificationType.GOAL_COMPLETION_APPROVED, // Note: You might want a specific REJECTED type if available
+                "Your goal '" + goal.getTitle() + "' completion was rejected. Please review feedback.",
+                "Goal",
+                goalId,
+                "HIGH",
+                true
+        );
         // Audit log
-        AuditLog log = new AuditLog();
-        log.setUser(mgr);
-        log.setAction("GOAL_COMPLETION_REJECTED");
-        log.setDetails("Rejected completion for goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        createAuditLog(mgr, "GOAL_COMPLETION_REJECTED", "Rejected completion for goal: " + goal.getTitle(), "Goal", goalId);
 
         return updated;
     }
 
     // Add progress update (Employee)
+    @Transactional
     public void addProgressUpdate(Integer goalId, Integer empId, String note) {
         Goal goal = getGoalById(goalId);
 
@@ -542,16 +486,10 @@ public class GoalService {
         goalRepo.save(goal);
 
         // Audit log
-        User emp = userRepo.findById(empId).orElse(null);
-        AuditLog log = new AuditLog();
-        log.setUser(emp);
-        log.setAction("PROGRESS_ADDED");
-        log.setDetails("Added progress update for goal: " + goal.getTitle());
-        log.setRelatedEntityType("Goal");
-        log.setRelatedEntityId(goalId);
-        log.setStatus("SUCCESS");
-        log.setTimestamp(LocalDateTime.now());
-        auditRepo.save(log);
+        User emp = userRepo.findById(empId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+        createAuditLog(emp, "PROGRESS_ADDED", "Added progress update for goal: " + goal.getTitle(), "Goal", goalId);
     }
 
     // Get progress updates
