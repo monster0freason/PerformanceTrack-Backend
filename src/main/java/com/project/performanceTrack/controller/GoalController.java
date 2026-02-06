@@ -8,6 +8,7 @@ import com.project.performanceTrack.entity.Goal;
 import com.project.performanceTrack.service.GoalService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,10 @@ import java.util.Map;
 // Goal management controller
 @RestController
 @RequestMapping("/api/v1/goals")
+@RequiredArgsConstructor
 public class GoalController {
 
-    @Autowired
-    private GoalService goalSvc;
+    private final GoalService goalSvc;
 
     // Create goal (Employee)
     @PostMapping
