@@ -3,7 +3,7 @@ package com.project.performanceTrack.controller;
 import com.project.performanceTrack.dto.ApiResponse;
 import com.project.performanceTrack.entity.AuditLog;
 import com.project.performanceTrack.repository.AuditLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +16,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class AuditLogController {
 
-    @Autowired
-    private AuditLogRepository auditRepo;
+
+    private final AuditLogRepository auditRepo;
 
     // Get audit logs with filters
     @GetMapping

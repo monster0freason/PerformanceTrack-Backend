@@ -8,7 +8,7 @@ import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.AuditLogRepository;
 import com.project.performanceTrack.repository.UserRepository;
 import com.project.performanceTrack.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +16,16 @@ import java.time.LocalDateTime;
 
 // Authentication service for login/logout
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepo;
+    private final UserRepository userRepo;
 
-    @Autowired
-    private PasswordEncoder pwdEncoder;
+    private final PasswordEncoder pwdEncoder;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private AuditLogRepository auditRepo;
+    private final AuditLogRepository auditRepo;
 
     // User login
     public LoginResponse login(LoginRequest req) {

@@ -6,7 +6,7 @@ import com.project.performanceTrack.entity.User;
 import com.project.performanceTrack.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,10 +15,11 @@ import java.util.List;
 // User management controller
 @RestController
 @RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userSvc;
+
+    private final UserService userSvc;
 
     // Get all users (Admin/Manager)
     @GetMapping

@@ -2,20 +2,16 @@ package com.project.performanceTrack.util;
 import com.project.performanceTrack.entity.*;
 import com.project.performanceTrack.enums.*;
 import com.project.performanceTrack.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 @Component
+@RequiredArgsConstructor
 public class PerformanceTrackerUtil {
 
     private final NotificationRepository notifRepo;
     private final AuditLogRepository auditRepo;
-
-    // Constructor injection (Spring will automatically inject these)
-    public PerformanceTrackerUtil(NotificationRepository notifRepo, AuditLogRepository auditRepo) {
-        this.notifRepo = notifRepo;
-        this.auditRepo = auditRepo;
-    }
 
     /**
      * Flexible Notification Creator

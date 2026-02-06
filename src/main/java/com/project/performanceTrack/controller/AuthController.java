@@ -6,7 +6,7 @@ import com.project.performanceTrack.dto.LoginResponse;
 import com.project.performanceTrack.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -14,11 +14,11 @@ import java.util.Map;
 // Authentication controller - handles login/logout
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     // Login endpoint
-    @Autowired
-    private AuthService authSvc;
+    private final AuthService authSvc;
 
 
     @PostMapping("/login")
