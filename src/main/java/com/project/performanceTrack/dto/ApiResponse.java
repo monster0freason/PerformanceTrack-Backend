@@ -3,6 +3,7 @@ package com.project.performanceTrack.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 
 // Standard API response wrapper
 @Data
@@ -26,5 +27,10 @@ public class ApiResponse<T> {
     // Error response
     public static <T> ApiResponse<T> error(String msg) {
         return new ApiResponse<>("error", msg, null);
+    }
+
+
+    public static <T> ApiResponse<PageResponse<T>> successPage(String msg, Page<T> page) {
+        return new ApiResponse<>("success", msg, new PageResponse<>(page));
     }
 }

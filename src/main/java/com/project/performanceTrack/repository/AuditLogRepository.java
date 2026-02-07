@@ -1,6 +1,8 @@
 package com.project.performanceTrack.repository;
 
 import com.project.performanceTrack.entity.AuditLog;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +21,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
 
     // Find audit logs in date range
     List<AuditLog> findByTimestampBetweenOrderByTimestampDesc(LocalDateTime start, LocalDateTime end);
+
+    // New - paginated versions
+    Page<AuditLog> findByUser_UserId(Integer userId, Pageable pageable);
+    Page<AuditLog> findByAction(String action, Pageable pageable);
+    Page<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 }
