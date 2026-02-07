@@ -1,15 +1,16 @@
 package com.project.performanceTrack.controller;
 
-import com.project.performanceTrack.dto.ApiResponse;
-import com.project.performanceTrack.dto.ApproveCompletionRequest;
-import com.project.performanceTrack.dto.CreateGoalRequest;
-import com.project.performanceTrack.dto.SubmitCompletionRequest;
+import com.project.performanceTrack.dto.*;
 import com.project.performanceTrack.entity.Goal;
 import com.project.performanceTrack.service.GoalService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,28 +37,36 @@ public class GoalController {
 
     // Get goals by user (Employee)
     @GetMapping
-    public ApiResponse<List<Goal>> getGoals(HttpServletRequest httpReq,
-                                            @RequestParam(required = false) Integer userId,
-                                            @RequestParam(required = false) Integer mgrId) {
+    public ApiResponse<PageResponse<Goal>> getGoals(
+            HttpServletRequest httpReq,
+            @RequestParam(required = false) Integer userId,
+            @RequestParam(required = false) Integer mgrId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
         String role = (String) httpReq.getAttribute("userRole");
         Integer currentUserId = (Integer) httpReq.getAttribute("userId");
 
-        List<Goal> goals;
+        // Cap page size at 100 to prevent abuse
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100),
+                Sort.by("createdDate").descending());
+
+        Page<Goal> goals;
         if (role.equals("EMPLOYEE")) {
-            goals = goalSvc.getGoalsByUser(currentUserId);
+            goals = goalSvc.getGoalsByUser(currentUserId, pageable);
         } else if (role.equals("MANAGER")) {
             if (userId != null) {
-                goals = goalSvc.getGoalsByUser(userId);
+                goals = goalSvc.getGoalsByUser(userId, pageable);
             } else {
-                goals = goalSvc.getGoalsByManager(currentUserId);
+                goals = goalSvc.getGoalsByManager(currentUserId, pageable);
             }
         } else {
-            goals = userId != null ? goalSvc.getGoalsByUser(userId) :
-                    mgrId != null ? goalSvc.getGoalsByManager(mgrId) :
-                            goalSvc.getGoalsByUser(currentUserId);
+            goals = userId != null ? goalSvc.getGoalsByUser(userId, pageable) :
+                    mgrId != null ? goalSvc.getGoalsByManager(mgrId, pageable) :
+                            goalSvc.getGoalsByUser(currentUserId, pageable);
         }
 
-        return ApiResponse.success("Goals retrieved", goals);
+        return ApiResponse.successPage("Goals retrieved", goals);
     }
 
     // Get goal by ID

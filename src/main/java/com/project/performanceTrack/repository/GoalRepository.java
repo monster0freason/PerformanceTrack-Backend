@@ -2,9 +2,12 @@ package com.project.performanceTrack.repository;
 
 import com.project.performanceTrack.entity.Goal;
 import com.project.performanceTrack.enums.GoalStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 // Goal repository for database operations
@@ -25,4 +28,17 @@ public interface GoalRepository extends JpaRepository<Goal, Integer> {
 
     // Find goals by manager and status
     List<Goal> findByAssignedManager_UserIdAndStatus(Integer managerId, GoalStatus status);
+
+    // New - paginated versions (used by controllers)
+    Page<Goal> findByAssignedToUser_UserId(Integer userId, Pageable pageable);
+    Page<Goal> findByAssignedManager_UserId(Integer managerId, Pageable pageable);
+
+    // New - needed by scheduler to find stale pending goals
+    List<Goal> findByStatusAndCreatedDateBefore(GoalStatus status, LocalDateTime before);
+
+    // New - needed by scheduler to find stale pending completions
+    List<Goal> findByStatusAndCompletionSubmittedDateBefore(GoalStatus status, LocalDateTime before);
+
+
+
 }
