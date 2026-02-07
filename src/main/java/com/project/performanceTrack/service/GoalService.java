@@ -10,6 +10,8 @@ import com.project.performanceTrack.exception.ResourceNotFoundException;
 import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,6 +91,15 @@ public class GoalService {
     // Get goals by manager
     public List<Goal> getGoalsByManager(Integer mgrId) {
         return goalRepo.findByAssignedManager_UserId(mgrId);
+    }
+
+    // New - paginated
+    public Page<Goal> getGoalsByUser(Integer userId, Pageable pageable) {
+        return goalRepo.findByAssignedToUser_UserId(userId, pageable);
+    }
+
+    public Page<Goal> getGoalsByManager(Integer mgrId, Pageable pageable) {
+        return goalRepo.findByAssignedManager_UserId(mgrId, pageable);
     }
 
     // Get goal by ID

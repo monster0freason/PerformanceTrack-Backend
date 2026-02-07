@@ -36,28 +36,36 @@ public class GoalController {
 
     // Get goals by user (Employee)
     @GetMapping
-    public ApiResponse<List<Goal>> getGoals(HttpServletRequest httpReq,
-                                            @RequestParam(required = false) Integer userId,
-                                            @RequestParam(required = false) Integer mgrId) {
+    public ApiResponse<PageResponse<Goal>> getGoals(
+            HttpServletRequest httpReq,
+            @RequestParam(required = false) Integer userId,
+            @RequestParam(required = false) Integer mgrId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
         String role = (String) httpReq.getAttribute("userRole");
         Integer currentUserId = (Integer) httpReq.getAttribute("userId");
 
-        List<Goal> goals;
+        // Cap page size at 100 to prevent abuse
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100),
+                Sort.by("createdDate").descending());
+
+        Page<Goal> goals;
         if (role.equals("EMPLOYEE")) {
-            goals = goalSvc.getGoalsByUser(currentUserId);
+            goals = goalSvc.getGoalsByUser(currentUserId, pageable);
         } else if (role.equals("MANAGER")) {
             if (userId != null) {
-                goals = goalSvc.getGoalsByUser(userId);
+                goals = goalSvc.getGoalsByUser(userId, pageable);
             } else {
-                goals = goalSvc.getGoalsByManager(currentUserId);
+                goals = goalSvc.getGoalsByManager(currentUserId, pageable);
             }
         } else {
-            goals = userId != null ? goalSvc.getGoalsByUser(userId) :
-                    mgrId != null ? goalSvc.getGoalsByManager(mgrId) :
-                            goalSvc.getGoalsByUser(currentUserId);
+            goals = userId != null ? goalSvc.getGoalsByUser(userId, pageable) :
+                    mgrId != null ? goalSvc.getGoalsByManager(mgrId, pageable) :
+                            goalSvc.getGoalsByUser(currentUserId, pageable);
         }
 
-        return ApiResponse.success("Goals retrieved", goals);
+        return ApiResponse.successPage("Goals retrieved", goals);
     }
 
     // Get goal by ID
