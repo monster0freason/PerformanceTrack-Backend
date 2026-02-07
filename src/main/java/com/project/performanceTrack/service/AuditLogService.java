@@ -4,6 +4,8 @@ import com.project.performanceTrack.entity.AuditLog;
 import com.project.performanceTrack.entity.User;
 import com.project.performanceTrack.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,5 +55,20 @@ public class AuditLogService {
     // Returns the string path where the generated export file will be located.
     public String initiateExport(String format) {
         return "/exports/audit_logs_" + System.currentTimeMillis() + "." + format.toLowerCase();
+    }
+
+    // New - paginated
+    public Page<AuditLog> getAuditLogs(Integer userId, String action,
+                                       LocalDateTime startDt, LocalDateTime endDt,
+                                       Pageable pageable) {
+        if (userId != null) {
+            return auditRepo.findByUser_UserId(userId, pageable);
+        } else if (action != null) {
+            return auditRepo.findByAction(action, pageable);
+        } else if (startDt != null && endDt != null) {
+            return auditRepo.findByTimestampBetween(startDt, endDt, pageable);
+        } else {
+            return auditRepo.findAll(pageable);  // JpaRepository already has this
+        }
     }
 }
