@@ -1,6 +1,7 @@
 package com.project.performanceTrack.config;
 
 import com.project.performanceTrack.security.JwtAuthFilter;
+import com.project.performanceTrack.security.RateLimitFilter;        // <-- new import
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;                    // <-- new field
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,6 +43,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .addFilterBefore(rateLimitFilter, JwtAuthFilter.class)      // <-- new line
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
