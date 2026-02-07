@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 // JWT authentication filter - validates token on each request
+@Slf4j
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
@@ -38,7 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 email = jwtUtil.extractEmail(token);
             } catch (Exception e) {
-                // Invalid token, continue without authentication
+                log.warn("Invalid JWT token on {} {}: {}", request.getMethod(), request.getRequestURI(), e.getMessage());
             }
         }
 
@@ -61,6 +63,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 request.setAttribute("userId", userId);
                 request.setAttribute("userRole", role);
+
+                log.debug("Authenticated user: {} (id={}, role={})", email, userId, role);
             }
         }
 

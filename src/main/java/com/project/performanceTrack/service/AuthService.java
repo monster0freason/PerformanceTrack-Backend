@@ -7,10 +7,12 @@ import com.project.performanceTrack.exception.UnauthorizedException;
 import com.project.performanceTrack.repository.UserRepository;
 import com.project.performanceTrack.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -25,13 +27,18 @@ public class AuthService {
     // Returns a response containing the token and essential user profile data.
     public LoginResponse login(LoginRequest req) {
         User user = userRepo.findByEmail(req.getEmail())
-                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+                .orElseThrow(() -> {
+                    log.warn("Failed login attempt - email not found: {}", req.getEmail());
+                    return new UnauthorizedException("Invalid email or password");
+                });
 
         if (!pwdEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            log.warn("Failed login attempt - wrong password for user: {}", req.getEmail());
             throw new UnauthorizedException("Invalid email or password");
         }
 
         if (user.getStatus().name().equals("INACTIVE")) {
+            log.warn("Failed login attempt - inactive account: {}", req.getEmail());
             throw new UnauthorizedException("Account is inactive");
         }
 
@@ -39,6 +46,7 @@ public class AuthService {
 
         auditLogService.logAudit(user, "LOGIN", "User logged in successfully", null, null, "SUCCESS");
 
+        log.info("User logged in successfully: {} (id={})", user.getEmail(), user.getUserId());
         return new LoginResponse(token, user.getUserId(), user.getName(), user.getEmail(), user.getRole(), user.getDepartment());
     }
 
@@ -49,6 +57,7 @@ public class AuthService {
         User user = userRepo.findById(userId).orElse(null);
         if (user != null) {
             auditLogService.logAudit(user, "LOGOUT", "User logged out", null, null, "SUCCESS");
+            log.info("User logged out: {} (id={})", user.getEmail(), userId);
         }
     }
 
@@ -61,11 +70,13 @@ public class AuthService {
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
         if (!pwdEncoder.matches(oldPwd, user.getPasswordHash())) {
+            log.warn("Failed password change attempt - wrong current password for userId: {}", userId);
             throw new UnauthorizedException("Current password is incorrect");
         }
 
         user.setPasswordHash(pwdEncoder.encode(newPwd));
         userRepo.save(user);
+        log.info("Password changed successfully for userId: {}", userId);
 
         auditLogService.logAudit(user, "PASSWORD_CHANGED", "User changed password", "User", userId, "SUCCESS");
     }
