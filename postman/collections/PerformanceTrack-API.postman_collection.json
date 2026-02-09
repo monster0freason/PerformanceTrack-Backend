@@ -1,0 +1,3129 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "PerformanceTrack API",
+    "description": "Complete API collection for PerformanceTrack Backend.\n\nRun the Setup folder first to populate auth tokens, then run folders top-to-bottom for a full integration test.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "description": "Run this folder first. Logs in all 3 roles and saves JWT tokens to environment variables.",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has token', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('token');",
+                  "    pm.expect(res.data.role).to.eql('ADMIN');",
+                  "    pm.environment.set('admin_token', res.data.token);",
+                  "    pm.environment.set('admin_id', res.data.userId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Manager (Priya)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has token', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('token');",
+                  "    pm.expect(res.data.role).to.eql('MANAGER');",
+                  "    pm.environment.set('manager_token', res.data.token);",
+                  "    pm.environment.set('manager_id', res.data.userId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{manager_email}}\",\n  \"password\": \"{{manager_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Employee (Rahul)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has token', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('token');",
+                  "    pm.expect(res.data.role).to.eql('EMPLOYEE');",
+                  "    pm.environment.set('employee_token', res.data.token);",
+                  "    pm.environment.set('employee_id', res.data.userId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employee_email}}\",\n  \"password\": \"{{employee_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User management endpoints. Most require ADMIN role.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns array of users', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "    pm.expect(res.data.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns user object', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('userId');",
+                  "    pm.expect(res.data).to.have.property('name');",
+                  "    pm.expect(res.data).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{employee_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{employee_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "description": "Creates a new employee user. Saves the created user ID for subsequent requests.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('User created successfully', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('userId');",
+                  "    pm.expect(res.data.name).to.eql('Test User');",
+                  "    pm.environment.set('created_user_id', res.data.userId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@company.com\",\n  \"password\": \"test12345\",\n  \"role\": \"EMPLOYEE\",\n  \"dept\": \"Engineering\",\n  \"mgrId\": {{manager_id}},\n  \"status\": \"ACTIVE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "description": "Updates the previously created test user.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('User updated successfully', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data.name).to.eql('Test User Updated');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User Updated\",\n  \"email\": \"testuser@company.com\",\n  \"password\": \"test12345\",\n  \"role\": \"EMPLOYEE\",\n  \"dept\": \"Engineering\",\n  \"mgrId\": {{manager_id}},\n  \"status\": \"ACTIVE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{created_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{created_user_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Team Members",
+          "description": "Returns employees reporting to the manager. Uses manager auth.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns team array', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{manager_id}}/team",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{manager_id}}", "team"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Goals",
+      "description": "Goal management with full lifecycle: create → approve → work → submit evidence → verify → complete.",
+      "item": [
+        {
+          "name": "Lifecycle",
+          "description": "Basic CRUD operations for goals.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+          },
+          "item": [
+            {
+              "name": "Create Goal",
+              "description": "Creates a new goal as Employee. Saves goal ID for the full lifecycle flow.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Goal created', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "    pm.expect(res.data).to.have.property('goalId');",
+                      "    pm.expect(res.data.title).to.eql('Improve API Test Coverage');",
+                      "    pm.expect(res.data.status).to.eql('PENDING');",
+                      "    pm.environment.set('created_goal_id', res.data.goalId);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Improve API Test Coverage\",\n  \"desc\": \"Increase unit and integration test coverage for all REST endpoints to at least 80%\",\n  \"cat\": \"TECHNICAL\",\n  \"pri\": \"HIGH\",\n  \"startDt\": \"2026-02-10\",\n  \"endDt\": \"2026-04-30\",\n  \"mgrId\": {{manager_id}}\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Goals",
+              "description": "Returns paginated goals for the logged-in employee.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Returns paginated goals', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "    pm.expect(res.data).to.have.property('content');",
+                      "    pm.expect(res.data).to.have.property('totalElements');",
+                      "    pm.expect(res.data).to.have.property('totalPages');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals?page=0&size=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals"],
+                  "query": [
+                    { "key": "page", "value": "0" },
+                    { "key": "size", "value": "10" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Goal by ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Returns goal object', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "    pm.expect(res.data).to.have.property('goalId');",
+                      "    pm.expect(res.data).to.have.property('title');",
+                      "    pm.expect(res.data).to.have.property('status');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Goal",
+              "description": "Updates a goal. Note: service may require the goal to be in CHANGES_REQUESTED state.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Goal updated', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "    pm.expect(res.data).to.have.property('goalId');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Improve API Test Coverage - Updated\",\n  \"desc\": \"Increase test coverage for REST endpoints to 85% with integration tests\",\n  \"cat\": \"TECHNICAL\",\n  \"pri\": \"HIGH\",\n  \"startDt\": \"2026-02-10\",\n  \"endDt\": \"2026-05-15\",\n  \"mgrId\": {{manager_id}}\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Goal",
+              "description": "Soft-deletes a goal. Uses seed goal 8 (Arjun's low-priority goal) to avoid breaking the lifecycle flow.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Goal deleted', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/8",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "8"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Approval",
+          "description": "Manager approves or requests changes on employee goals.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+          },
+          "item": [
+            {
+              "name": "Approve Goal",
+              "description": "Manager approves the newly created goal. Moves status from PENDING to IN_PROGRESS.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Goal approved', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "    pm.expect(res.data).to.have.property('goalId');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}/approve",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}", "approve"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Request Changes",
+              "description": "Manager requests changes on a pending goal. Uses seed goal 4 (Arjun's pending goal).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Change request sent', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"comments\": \"Please add more specific measurable outcomes and a timeline for each milestone.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/4/request-changes",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "4", "request-changes"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Completion",
+          "description": "Goal completion workflow: employee submits → manager approves/rejects.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+          },
+          "item": [
+            {
+              "name": "Submit Completion",
+              "description": "Employee submits completion evidence for the approved goal.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Completion submitted', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "    pm.expect(res.data).to.have.property('goalId');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"evLink\": \"https://github.com/org/repo/pull/42\",\n  \"linkDesc\": \"PR with 85% test coverage across all REST endpoints\",\n  \"accessInstr\": \"Review the test report in the PR checks tab\",\n  \"compNotes\": \"Added unit tests for all controllers and integration tests for critical flows\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}/submit-completion",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}", "submit-completion"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Approve Completion",
+              "description": "Manager approves the goal completion.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Completion approved', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mgrComments\": \"Excellent work on improving test coverage. Well documented tests.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}/approve-completion",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}", "approve-completion"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reject Completion",
+              "description": "Manager rejects goal completion. Uses seed goal 5 (Rahul's goal pending completion approval).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Completion rejected', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"The evidence provided does not fully demonstrate completion of the mentoring objectives. Please provide feedback from mentees.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/5/reject-completion",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "5", "reject-completion"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Request Additional Evidence",
+              "description": "Manager requests more evidence. Uses seed goal 6 (Anita's goal needing additional evidence).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Additional evidence requested', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Please provide the bug tracking report showing the 40% reduction in bug count.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/6/request-additional-evidence",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "6", "request-additional-evidence"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Evidence",
+          "description": "Evidence verification by manager.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+          },
+          "item": [
+            {
+              "name": "Verify Evidence",
+              "description": "Manager verifies the submitted evidence link. Uses seed goal 5 (has evidence submitted).",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Evidence verified', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"VERIFIED\",\n  \"notes\": \"Evidence link is accessible and confirms completion of mentoring sessions.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/5/evidence/verify",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "5", "evidence", "verify"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Progress",
+          "description": "Track progress updates on goals.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+          },
+          "item": [
+            {
+              "name": "Add Progress Update",
+              "description": "Employee adds a progress note. Uses seed goal 2 (Anita's in-progress goal) with employee token override for Rahul's own goal.",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress added', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Completed writing unit tests for AuthController and UserController. Moving on to GoalController next.\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}/progress",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}", "progress"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Progress Updates",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Progress retrieved', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('success');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/{{created_goal_id}}/progress",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "{{created_goal_id}}", "progress"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Review Cycles",
+      "description": "Review cycle management. GET endpoints accessible to all; create/update restricted to ADMIN.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get All Cycles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns array of cycles', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/review-cycles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "review-cycles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cycle by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns cycle object', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('cycleId');",
+                  "    pm.expect(res.data).to.have.property('title');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/review-cycles/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "review-cycles", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Cycle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns active cycle', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('cycleId');",
+                  "    pm.expect(res.data.status).to.eql('ACTIVE');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/review-cycles/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "review-cycles", "active"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Review Cycle",
+          "description": "Admin creates a new review cycle. Saves the cycle ID.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cycle created', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('cycleId');",
+                  "    pm.environment.set('created_cycle_id', res.data.cycleId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Q2 2026 Performance Review\",\n  \"startDt\": \"2026-04-01\",\n  \"endDt\": \"2026-06-30\",\n  \"status\": \"DRAFT\",\n  \"reqCompAppr\": true,\n  \"evReq\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/review-cycles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "review-cycles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review Cycle",
+          "description": "Admin updates the newly created cycle to ACTIVE status.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cycle updated', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('cycleId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Q2 2026 Performance Review\",\n  \"startDt\": \"2026-04-01\",\n  \"endDt\": \"2026-06-30\",\n  \"status\": \"ACTIVE\",\n  \"reqCompAppr\": true,\n  \"evReq\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/review-cycles/{{created_cycle_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "review-cycles", "{{created_cycle_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Performance Reviews",
+      "description": "Self-assessment and manager review workflow.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get All Reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns array of reviews', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reviews by Cycle",
+          "description": "Filter reviews by cycle ID. Uses seed cycle 2 (Q4 2025 - closed, has reviews).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered reviews', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews?cycleId=2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews"],
+              "query": [
+                { "key": "cycleId", "value": "2" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Review by ID",
+          "description": "Uses seed review 1 (Rahul's Q4 2025 completed review).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns review object', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('reviewId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Self-Assessment",
+          "description": "Employee submits self-assessment for the active Q1 2026 cycle. Saves review ID.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Self-assessment submitted', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('reviewId');",
+                  "    pm.environment.set('created_review_id', res.data.reviewId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cycleId\": 1,\n  \"selfAssmt\": \"This quarter I focused on improving API performance and test coverage. I reduced average response times by 30% and increased test coverage from 45% to 82%. I also mentored two junior developers and contributed to the team's coding standards documentation.\",\n  \"selfRating\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Self-Assessment Draft",
+          "description": "Employee updates their self-assessment before manager reviews it.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Draft updated', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cycleId\": 1,\n  \"selfAssmt\": \"This quarter I focused on improving API performance and test coverage. I reduced average response times by 30% and increased test coverage from 45% to 85%. I also mentored two junior developers, contributed to coding standards documentation, and led the migration to Spring Boot 3.2.\",\n  \"selfRating\": 4\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews/{{created_review_id}}/draft",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews", "{{created_review_id}}", "draft"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Manager Review",
+          "description": "Manager reviews and rates the employee's self-assessment. Uses seed review 2 (Anita's self-assessment completed).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Manager review submitted', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mgrFb\": \"Anita has shown consistent improvement this quarter. Her work on the automated testing framework has been valuable to the team. Areas for growth include cross-team collaboration and presenting technical work to stakeholders.\",\n  \"mgrRating\": 4,\n  \"ratingJust\": \"Exceeded expectations on technical deliverables, met expectations on collaboration goals.\",\n  \"compRec\": \"Recommend 8% salary adjustment based on market data and performance.\",\n  \"nextGoals\": \"1. Lead a cross-team initiative 2. Present at engineering all-hands 3. Expand testing framework to cover E2E scenarios\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews/2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews", "2"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Acknowledge Review",
+          "description": "Employee acknowledges a completed review. Uses seed review 1 (Rahul's completed review) — may already be acknowledged.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Review acknowledged', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"Thank you for the detailed feedback. I agree with the areas for improvement and will focus on these in the next quarter.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/performance-reviews/2/acknowledge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "performance-reviews", "2", "acknowledge"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "description": "Feedback for goals and reviews.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get All Feedback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns feedback array', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "feedback"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Feedback by Goal",
+          "description": "Filter feedback for seed goal 1 (Rahul's completed goal).",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered feedback', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/feedback?goalId=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "feedback"],
+              "query": [
+                { "key": "goalId", "value": "1" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Feedback by Review",
+          "description": "Filter feedback for seed review 1.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered feedback', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/feedback?reviewId=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "feedback"],
+              "query": [
+                { "key": "reviewId", "value": "1" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Feedback for Goal",
+          "description": "Creates feedback linked to a goal. Saves feedback ID.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Feedback created', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('feedbackId');",
+                  "    pm.environment.set('created_feedback_id', res.data.feedbackId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comments\": \"Great progress on improving the test coverage. The integration tests are particularly well-structured and easy to maintain.\",\n  \"feedbackType\": \"POSITIVE\",\n  \"goalId\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "feedback"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Feedback for Review",
+          "description": "Creates feedback linked to a performance review.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Feedback created', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('feedbackId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comments\": \"The self-assessment was thorough and well-written. Consider adding specific metrics next time.\",\n  \"feedbackType\": \"CONSTRUCTIVE\",\n  \"reviewId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "feedback"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "User notification management.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get Notifications",
+          "description": "Returns paginated notifications for the logged-in user. Saves first notification ID.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns paginated notifications', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "    pm.expect(res.data).to.have.property('totalElements');",
+                  "    if (res.data.content && res.data.content.length > 0) {",
+                  "        pm.environment.set('notification_id', res.data.content[0].notificationId);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications?page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Notifications",
+          "description": "Filter notifications by UNREAD status.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns unread notifications', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications?status=UNREAD&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications"],
+              "query": [
+                { "key": "status", "value": "UNREAD" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "description": "Marks a single notification as read using the ID captured from Get Notifications.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Notification marked as read', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "{{notification_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('All notifications marked as read', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/mark-all-read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "notifications", "mark-all-read"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "description": "Audit log viewing and export. ADMIN only.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns paginated audit logs', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "    pm.expect(res.data).to.have.property('totalElements');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit-logs?page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit-logs"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs - Filtered by User",
+          "description": "Filter audit logs for a specific user.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered logs', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit-logs?userId={{employee_id}}&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit-logs"],
+              "query": [
+                { "key": "userId", "value": "{{employee_id}}" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs - Filtered by Action",
+          "description": "Filter audit logs by action type.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered logs', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit-logs?action=LOGIN&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit-logs"],
+              "query": [
+                { "key": "action", "value": "LOGIN" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs - Filtered by Date Range",
+          "description": "Filter audit logs within a date range.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered logs', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit-logs?startDt=2026-01-01T00:00:00&endDt=2026-12-31T23:59:59&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit-logs"],
+              "query": [
+                { "key": "startDt", "value": "2026-01-01T00:00:00" },
+                { "key": "endDt", "value": "2026-12-31T23:59:59" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Audit Logs - CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Export initiated', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"CSV\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit-logs/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit-logs", "export"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Audit Logs - PDF",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Export initiated', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"PDF\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit-logs/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit-logs", "export"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "description": "Reporting and analytics. ADMIN and MANAGER access.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get All Reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns reports array', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Report by ID",
+          "description": "Uses seed report 1.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns report object', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('reportId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Report generated', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.have.property('reportId');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope\": \"Company-wide Q1 2026 Performance Analysis\",\n  \"metrics\": \"goal_completion_rate,average_rating,department_comparison\",\n  \"format\": \"PDF\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dashboard Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns dashboard data', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "dashboard"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Performance Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns performance summary', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/performance-summary?cycleId=1&dept=Engineering",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "performance-summary"],
+              "query": [
+                { "key": "cycleId", "value": "1" },
+                { "key": "dept", "value": "Engineering" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Goal Analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns goal analytics', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/goal-analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "goal-analytics"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Department Performance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns department performance', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/department-performance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "department-performance"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Password change and logout. Run these last since logout invalidates the session.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Change Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Password changed', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"employee123\",\n  \"newPassword\": \"employee456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Logout successful', function () {",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.status).to.eql('success');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Negative Tests",
+      "description": "Tests for error handling, authorization failures, validation errors, and not-found scenarios.",
+      "item": [
+        {
+          "name": "Auth Errors",
+          "description": "Authentication failure scenarios.",
+          "item": [
+            {
+              "name": "Login - Wrong Password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Login fails with wrong password', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 401, 403]);",
+                      "});",
+                      "",
+                      "pm.test('Error response returned', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('error');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"wrongpassword\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login - Non-existent Email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Login fails with unknown email', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 401, 404]);",
+                      "});",
+                      "",
+                      "pm.test('Error response returned', function () {",
+                      "    const res = pm.response.json();",
+                      "    pm.expect(res.status).to.eql('error');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"nonexistent@company.com\",\n  \"password\": \"password123\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login - Empty Body",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Login fails with empty body', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 401, 403]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Access Endpoint without Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 401 or 403 without token', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Access Endpoint with Invalid Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 401 or 403 with invalid token', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "invalid.jwt.token.here", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Authorization Errors",
+          "description": "Role-based access control violations.",
+          "auth": {
+            "type": "bearer",
+            "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+          },
+          "item": [
+            {
+              "name": "Employee → Create User (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Employee cannot create users', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Unauthorized User\",\n  \"email\": \"unauth@company.com\",\n  \"password\": \"test123\",\n  \"role\": \"EMPLOYEE\",\n  \"dept\": \"Engineering\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Employee → Approve Goal (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Employee cannot approve goals', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/1/approve",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "1", "approve"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Employee → Create Review Cycle (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Employee cannot create review cycles', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Unauthorized Cycle\",\n  \"startDt\": \"2026-07-01\",\n  \"endDt\": \"2026-09-30\",\n  \"status\": \"DRAFT\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/review-cycles",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "review-cycles"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Employee → Get Audit Logs (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Employee cannot access audit logs', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/audit-logs",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "audit-logs"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Employee → Generate Report (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Employee cannot generate reports', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"scope\": \"Unauthorized Report\",\n  \"metrics\": \"test\",\n  \"format\": \"PDF\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/reports/generate",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "reports", "generate"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Employee → Submit Manager Review (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Employee cannot submit manager reviews', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mgrFb\": \"Unauthorized feedback\",\n  \"mgrRating\": 3\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/performance-reviews/2",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "performance-reviews", "2"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Manager → Create User (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Manager cannot create users', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Unauthorized User\",\n  \"email\": \"unauth2@company.com\",\n  \"password\": \"test123\",\n  \"role\": \"EMPLOYEE\",\n  \"dept\": \"Engineering\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Manager → Get Audit Logs (403)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Manager cannot access audit logs', function () {",
+                      "    pm.expect(pm.response.code).to.eql(403);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{manager_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/audit-logs",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "audit-logs"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Validation Errors",
+          "description": "Missing or invalid request body fields.",
+          "item": [
+            {
+              "name": "Create User - Missing Required Fields",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 400 for missing fields', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Incomplete User\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create User - Invalid Email",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 400 for invalid email', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Bad Email User\",\n  \"email\": \"not-an-email\",\n  \"password\": \"test123\",\n  \"role\": \"EMPLOYEE\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Goal - Missing Title",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 400 for missing title', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"desc\": \"Missing the title field\",\n  \"cat\": \"TECHNICAL\",\n  \"pri\": \"HIGH\",\n  \"startDt\": \"2026-03-01\",\n  \"endDt\": \"2026-06-30\",\n  \"mgrId\": {{manager_id}}\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Goal - Missing All Fields",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 400 for empty body', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Review Cycle - Missing Fields",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 400 for missing fields', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Incomplete Cycle\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/review-cycles",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "review-cycles"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Submit Self-Assessment - Missing Rating",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 400 for missing rating', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cycleId\": 1,\n  \"selfAssmt\": \"Missing the rating field\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/performance-reviews",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "performance-reviews"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Not Found Errors",
+          "description": "Requesting resources that do not exist.",
+          "item": [
+            {
+              "name": "Get User - Invalid ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 404 for non-existent user', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([404, 400]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users", "99999"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Goal - Invalid ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 404 for non-existent goal', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([404, 400]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/goals/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "goals", "99999"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Review - Invalid ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 404 for non-existent review', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([404, 400]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/performance-reviews/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "performance-reviews", "99999"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Review Cycle - Invalid ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 404 for non-existent cycle', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([404, 400]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/review-cycles/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "review-cycles", "99999"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark Non-existent Notification as Read",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Returns 404 for non-existent notification', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([404, 400]);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{employee_token}}", "type": "string" }]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/notifications/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "notifications", "99999"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
