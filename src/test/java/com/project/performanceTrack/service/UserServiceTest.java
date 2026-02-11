@@ -1,5 +1,19 @@
 package com.project.performanceTrack.service;
 
+/*
+ * This file tests the UserService class.
+ *
+ * UserService handles all user management operations:
+ * - Getting all users
+ * - Finding a specific user by ID
+ * - Creating a new user (with email validation, password encoding, notifications)
+ * - Updating an existing user
+ * - Getting all team members under a specific manager
+ *
+ * Notice how we test BOTH the happy path (things go well)
+ * AND the sad path (things go wrong) for each method.
+ */
+
 import com.project.performanceTrack.dto.CreateUserRequest;
 import com.project.performanceTrack.entity.User;
 import com.project.performanceTrack.enums.NotificationType;
@@ -25,19 +39,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for UserService.
- *
- * This test class covers all methods in UserService:
- * - getAllUsers()
- * - getUserById()
- * - createUser()
- * - updateUser()
- * - getTeamMembers()
- */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
+    /*
+     * All the fakes UserService depends on.
+     */
     @Mock
     private UserRepository userRepo;
 
@@ -53,6 +60,12 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    /*
+     * Three different user types for our tests:
+     * - testUser: a regular employee
+     * - adminUser: the admin performing operations
+     * - managerUser: a manager who can have team members
+     */
     private User testUser;
     private User adminUser;
     private User managerUser;
@@ -81,35 +94,42 @@ class UserServiceTest {
         managerUser.setRole(UserRole.MANAGER);
     }
 
-    // ==================== getAllUsers() ====================
+    /*
+     * ==================== TESTS FOR getAllUsers() ====================
+     */
 
     @Test
     @DisplayName("getAllUsers() should return list of all users")
     void getAllUsers_ShouldReturnAllUsers() {
-        // Arrange: Mock the repository to return a list of users
+
+        /*
+         * ARRANGE: Database has 2 users - our test user and admin.
+         */
         List<User> users = Arrays.asList(testUser, adminUser);
         when(userRepo.findAll()).thenReturn(users);
 
-        // Act
         List<User> result = userService.getAllUsers();
 
-        // Assert
+        /*
+         * ASSERT: We should get both users back.
+         * Also verify that findAll() was actually called (not some other method).
+         */
         assertEquals(2, result.size(), "Should return 2 users");
         verify(userRepo).findAll();
     }
 
-    // ==================== getUserById() ====================
+    /*
+     * ==================== TESTS FOR getUserById() ====================
+     */
 
     @Test
     @DisplayName("getUserById() should return user when found")
     void getUserById_WithValidId_ShouldReturnUser() {
-        // Arrange
+
         when(userRepo.findById(1)).thenReturn(Optional.of(testUser));
 
-        // Act
         User result = userService.getUserById(1);
 
-        // Assert
         assertNotNull(result);
         assertEquals("John Doe", result.getName());
         assertEquals(1, result.getUserId());
@@ -118,10 +138,12 @@ class UserServiceTest {
     @Test
     @DisplayName("getUserById() should throw ResourceNotFoundException when user not found")
     void getUserById_WithInvalidId_ShouldThrowResourceNotFoundException() {
-        // Arrange
+
+        /*
+         * ARRANGE: No user with ID 999 exists.
+         */
         when(userRepo.findById(999)).thenReturn(Optional.empty());
 
-        // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> userService.getUserById(999)
@@ -130,12 +152,17 @@ class UserServiceTest {
         assertEquals("User not found", exception.getMessage());
     }
 
-    // ==================== createUser() ====================
+    /*
+     * ==================== TESTS FOR createUser() ====================
+     */
 
     @Test
     @DisplayName("createUser() should create user successfully when email is unique")
     void createUser_WithUniqueEmail_ShouldCreateUser() {
-        // Arrange
+
+        /*
+         * ARRANGE: Build a complete create user request.
+         */
         CreateUserRequest req = new CreateUserRequest();
         req.setName("New User");
         req.setEmail("new@example.com");
@@ -144,25 +171,43 @@ class UserServiceTest {
         req.setDept("Engineering");
         req.setStatus(UserStatus.ACTIVE);
 
+        /*
+         * Set up the chain of events:
+         * 1. Email doesn't exist yet (Optional.empty())
+         * 2. Password gets encoded
+         * 3. User gets saved with a new ID (using thenAnswer to simulate DB generating ID)
+         * 4. Admin user is found for audit logging
+         */
         when(userRepo.findByEmail("new@example.com")).thenReturn(Optional.empty());
         when(pwdEncoder.encode("secret123")).thenReturn("encodedSecret");
         when(userRepo.save(any(User.class))).thenAnswer(invocation -> {
-            // Return the same user but with an ID (simulating database save)
+            /*
+             * thenAnswer lets us write custom logic instead of just returning a fixed value.
+             * Here we grab the user that was passed to save() and give it an ID,
+             * simulating what the database would do.
+             */
             User saved = invocation.getArgument(0);
             saved.setUserId(10);
             return saved;
         });
         when(userRepo.findById(100)).thenReturn(Optional.of(adminUser));
 
-        // Act
+        /*
+         * ACT: Create the user (admin with ID 100 is doing the creating).
+         */
         User result = userService.createUser(req, 100);
 
-        // Assert
+        /*
+         * ASSERT: Check the user was created correctly.
+         */
         assertNotNull(result);
         assertEquals("New User", result.getName());
         assertEquals("encodedSecret", result.getPasswordHash());
 
-        // Verify notification was sent
+        /*
+         * Verify an account creation notification was sent to the new user.
+         * The notification service should have been called with specific parameters.
+         */
         verify(notificationService).sendNotification(
                 any(User.class),
                 eq(NotificationType.ACCOUNT_CREATED),
@@ -173,33 +218,49 @@ class UserServiceTest {
                 eq(false)
         );
 
-        // Verify audit log was created
+        /*
+         * Verify the action was recorded in the audit log.
+         */
         verify(auditLogService).logAudit(any(), eq("USER_CREATED"), anyString(), eq("User"), anyInt(), eq("SUCCESS"));
     }
 
     @Test
     @DisplayName("createUser() should throw BadRequestException when email already exists")
     void createUser_WithDuplicateEmail_ShouldThrowBadRequestException() {
-        // Arrange
+
+        /*
+         * ARRANGE: The email "john@example.com" is already taken.
+         */
         CreateUserRequest req = new CreateUserRequest();
         req.setEmail("john@example.com");
 
         when(userRepo.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
 
-        // Act & Assert
+        /*
+         * ASSERT: Should throw BadRequestException - can't have duplicate emails!
+         */
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
                 () -> userService.createUser(req, 100)
         );
 
         assertEquals("Email already exists", exception.getMessage());
+
+        /*
+         * Critical: verify that save() was NEVER called.
+         * We should abort before saving if the email is already taken.
+         */
         verify(userRepo, never()).save(any());
     }
 
     @Test
     @DisplayName("createUser() should assign manager when managerId is provided")
     void createUser_WithManagerId_ShouldAssignManager() {
-        // Arrange
+
+        /*
+         * ARRANGE: Create request with a managerId specified.
+         * This means the new employee should be assigned to manager with ID 50.
+         */
         CreateUserRequest req = new CreateUserRequest();
         req.setName("New Employee");
         req.setEmail("emp@example.com");
@@ -219,20 +280,26 @@ class UserServiceTest {
         });
         when(userRepo.findById(100)).thenReturn(Optional.of(adminUser));
 
-        // Act
         User result = userService.createUser(req, 100);
 
-        // Assert
+        /*
+         * ASSERT: The new employee's manager should be set to our managerUser.
+         */
         assertNotNull(result);
         assertEquals(managerUser, result.getManager(), "Manager should be assigned");
     }
 
-    // ==================== updateUser() ====================
+    /*
+     * ==================== TESTS FOR updateUser() ====================
+     */
 
     @Test
     @DisplayName("updateUser() should update user fields correctly")
     void updateUser_WithValidData_ShouldUpdateUser() {
-        // Arrange
+
+        /*
+         * ARRANGE: Request to update user 1's name, role, and department.
+         */
         CreateUserRequest req = new CreateUserRequest();
         req.setName("Updated Name");
         req.setRole(UserRole.MANAGER);
@@ -243,10 +310,11 @@ class UserServiceTest {
         when(userRepo.save(any(User.class))).thenReturn(testUser);
         when(userRepo.findById(100)).thenReturn(Optional.of(adminUser));
 
-        // Act
         User result = userService.updateUser(1, req, 100);
 
-        // Assert
+        /*
+         * ASSERT: The returned user should have the updated values.
+         */
         assertNotNull(result);
         assertEquals("Updated Name", result.getName());
         assertEquals(UserRole.MANAGER, result.getRole());
@@ -256,29 +324,40 @@ class UserServiceTest {
     @Test
     @DisplayName("updateUser() should throw ResourceNotFoundException when user not found")
     void updateUser_WithInvalidUserId_ShouldThrowResourceNotFoundException() {
-        // Arrange
+
+        /*
+         * ARRANGE: User 999 doesn't exist.
+         */
         when(userRepo.findById(999)).thenReturn(Optional.empty());
 
-        // Act & Assert
+        /*
+         * ASSERT: Can't update a user that doesn't exist!
+         */
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> userService.updateUser(999, new CreateUserRequest(), 100)
         );
     }
 
-    // ==================== getTeamMembers() ====================
+    /*
+     * ==================== TESTS FOR getTeamMembers() ====================
+     */
 
     @Test
     @DisplayName("getTeamMembers() should return list of team members for a manager")
     void getTeamMembers_ShouldReturnTeamList() {
-        // Arrange
+
+        /*
+         * ARRANGE: Manager with ID 50 has one team member - our testUser.
+         */
         List<User> team = Arrays.asList(testUser);
         when(userRepo.findByManager_UserId(50)).thenReturn(team);
 
-        // Act
         List<User> result = userService.getTeamMembers(50);
 
-        // Assert
+        /*
+         * ASSERT: Should return the correct team members.
+         */
         assertEquals(1, result.size());
         assertEquals("John Doe", result.get(0).getName());
     }

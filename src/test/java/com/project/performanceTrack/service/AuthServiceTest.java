@@ -1,5 +1,16 @@
 package com.project.performanceTrack.service;
 
+/*
+ * This is the most important and thorough test file in the project.
+ * It tests AuthService - the core class that handles:
+ * - Login (checking credentials and generating JWT tokens)
+ * - Logout (recording that someone logged out)
+ * - Change Password (validating old password and saving a new one)
+ *
+ * The comment at the top of the original file explained the key concepts well -
+ * we've kept them below with more detail added.
+ */
+
 import com.project.performanceTrack.dto.LoginRequest;
 import com.project.performanceTrack.dto.LoginResponse;
 import com.project.performanceTrack.entity.User;
@@ -23,28 +34,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for AuthService.
- *
- * KEY CONCEPTS FOR FRESHERS:
- * --------------------------
- * @ExtendWith(MockitoExtension.class) -> Tells JUnit to use Mockito for this test class.
- * @Mock -> Creates a fake (mock) version of a dependency. It doesn't hit the real database.
- * @InjectMocks -> Creates the real service, but injects all the @Mock objects into it.
- *
- * when(...).thenReturn(...) -> "When this method is called, return this value."
- * verify(...) -> "Check that this method was actually called."
- * assertThrows(...) -> "Expect this code to throw an exception."
- *
- * TEST PATTERN: Arrange -> Act -> Assert
- *   Arrange = set up test data and mock behavior
- *   Act     = call the method you're testing
- *   Assert  = check the result is what you expected
- */
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    // These are fake versions of the real dependencies
+    /*
+     * All the dependencies AuthService needs - but FAKE versions of each.
+     *
+     * - userRepo: won't query the real database
+     * - pwdEncoder: won't actually hash passwords
+     * - jwtUtil: won't generate real JWT tokens
+     * - auditLogService: won't save real audit logs
+     */
     @Mock
     private UserRepository userRepo;
 
@@ -57,21 +57,23 @@ class AuthServiceTest {
     @Mock
     private AuditLogService auditLogService;
 
-    // This is the real service we're testing, with mocks injected into it
+    /*
+     * The REAL AuthService, but with all the above fakes injected into it.
+     * This is the class we're actually testing.
+     */
     @InjectMocks
     private AuthService authService;
 
-    // Reusable test data
     private User testUser;
     private LoginRequest loginRequest;
 
-    /**
-     * @BeforeEach runs before EVERY test method.
-     * We set up common test data here so we don't repeat it in every test.
-     */
     @BeforeEach
     void setUp() {
-        // Create a sample user for our tests
+
+        /*
+         * Create a realistic test user representing a normal employee.
+         * Note: passwordHash is already "encoded" - in real life this would be a bcrypt hash.
+         */
         testUser = new User();
         testUser.setUserId(1);
         testUser.setName("John Doe");
@@ -81,26 +83,42 @@ class AuthServiceTest {
         testUser.setDepartment("Engineering");
         testUser.setStatus(UserStatus.ACTIVE);
 
-        // Create a sample login request
+        /*
+         * Create a login request - what the user sends from the frontend.
+         */
         loginRequest = new LoginRequest();
         loginRequest.setEmail("john@example.com");
         loginRequest.setPassword("password123");
     }
 
-    // ==================== LOGIN TESTS ====================
+    /*
+     * ==================== TESTS FOR login() ====================
+     */
 
     @Test
     @DisplayName("login() should return token and user info when credentials are valid")
     void login_WithValidCredentials_ShouldReturnLoginResponse() {
-        // Arrange: Set up mock behavior
+
+        /*
+         * ARRANGE: Set up the full happy path.
+         *
+         * Step 1: When we look up the email, return our test user
+         * Step 2: When we check if the password matches, say YES
+         * Step 3: When we generate a token, return our fake token
+         */
         when(userRepo.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
         when(pwdEncoder.matches("password123", "encodedPassword123")).thenReturn(true);
         when(jwtUtil.generateToken("john@example.com", 1, "EMPLOYEE")).thenReturn("fake-jwt-token");
 
-        // Act: Call the method we're testing
+        /*
+         * ACT: Try to login.
+         */
         LoginResponse response = authService.login(loginRequest);
 
-        // Assert: Check the result
+        /*
+         * ASSERT: Check all the fields in the response are correct.
+         * Each assertion has a message explaining WHAT we're checking.
+         */
         assertNotNull(response, "Response should not be null");
         assertEquals("fake-jwt-token", response.getToken(), "Token should match");
         assertEquals(1, response.getUserId(), "User ID should match");
@@ -108,17 +126,30 @@ class AuthServiceTest {
         assertEquals("john@example.com", response.getEmail(), "Email should match");
         assertEquals(UserRole.EMPLOYEE, response.getRole(), "Role should match");
 
-        // Verify that audit log was called to record the login
+        /*
+         * Also verify that a LOGIN audit log was recorded.
+         * eq() = must be exactly this value
+         * anyString() = any string value is fine
+         * isNull() = must be null
+         */
         verify(auditLogService).logAudit(eq(testUser), eq("LOGIN"), anyString(), isNull(), isNull(), eq("SUCCESS"));
     }
 
     @Test
     @DisplayName("login() should throw UnauthorizedException when email is not found")
     void login_WithInvalidEmail_ShouldThrowUnauthorizedException() {
-        // Arrange: No user found for this email
+
+        /*
+         * ARRANGE: Simulate "no user found" by returning Optional.empty().
+         * Optional.empty() is Java's way of saying "there's nothing here".
+         */
         when(userRepo.findByEmail("john@example.com")).thenReturn(Optional.empty());
 
-        // Act & Assert: Expect an exception
+        /*
+         * ACT & ASSERT: Login should throw UnauthorizedException.
+         *
+         * assertThrows returns the exception so we can check its message too!
+         */
         UnauthorizedException exception = assertThrows(
                 UnauthorizedException.class,
                 () -> authService.login(loginRequest),
@@ -127,87 +158,143 @@ class AuthServiceTest {
 
         assertEquals("Invalid email or password", exception.getMessage());
 
-        // Verify: No token should have been generated
+        /*
+         * IMPORTANT: Verify that we NEVER tried to generate a token.
+         * If email doesn't exist, we should bail out early - no token generation!
+         *
+         * verify(x, never()).method() = assert this method was NEVER called
+         */
         verify(jwtUtil, never()).generateToken(anyString(), anyInt(), anyString());
     }
 
     @Test
     @DisplayName("login() should throw UnauthorizedException when password is wrong")
     void login_WithWrongPassword_ShouldThrowUnauthorizedException() {
-        // Arrange
+
+        /*
+         * ARRANGE: User exists, but password check returns false (wrong password).
+         */
         when(userRepo.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
         when(pwdEncoder.matches("password123", "encodedPassword123")).thenReturn(false);
 
-        // Act & Assert
         UnauthorizedException exception = assertThrows(
                 UnauthorizedException.class,
                 () -> authService.login(loginRequest)
         );
 
         assertEquals("Invalid email or password", exception.getMessage());
+
+        /*
+         * Again verify no token was generated - wrong password means no access!
+         */
         verify(jwtUtil, never()).generateToken(anyString(), anyInt(), anyString());
     }
 
     @Test
     @DisplayName("login() should throw UnauthorizedException when account is inactive")
     void login_WithInactiveAccount_ShouldThrowUnauthorizedException() {
-        // Arrange: Make the user inactive
+
+        /*
+         * ARRANGE: User exists, password is correct, BUT account is INACTIVE.
+         * An inactive account shouldn't be able to login even with right credentials.
+         */
         testUser.setStatus(UserStatus.INACTIVE);
         when(userRepo.findByEmail("john@example.com")).thenReturn(Optional.of(testUser));
         when(pwdEncoder.matches("password123", "encodedPassword123")).thenReturn(true);
 
-        // Act & Assert
         UnauthorizedException exception = assertThrows(
                 UnauthorizedException.class,
                 () -> authService.login(loginRequest)
         );
 
+        /*
+         * Note: the error message is different here - it's not "Invalid email or password"
+         * but specifically "Account is inactive" so the user knows what's wrong.
+         */
         assertEquals("Account is inactive", exception.getMessage());
     }
 
-    // ==================== LOGOUT TESTS ====================
+    /*
+     * ==================== TESTS FOR logout() ====================
+     */
 
     @Test
     @DisplayName("logout() should log audit event when user exists")
     void logout_WithExistingUser_ShouldLogAudit() {
-        // Arrange
+
+        /*
+         * ARRANGE: User with ID 1 exists in the database.
+         */
         when(userRepo.findById(1)).thenReturn(Optional.of(testUser));
 
-        // Act
+        /*
+         * ACT: Logout the user.
+         */
         authService.logout(1);
 
-        // Assert: Verify the audit log was created
+        /*
+         * ASSERT: A LOGOUT audit log should have been created.
+         * We don't check a return value because logout() returns void -
+         * we only care that the side effect (audit log) happened.
+         */
         verify(auditLogService).logAudit(eq(testUser), eq("LOGOUT"), anyString(), isNull(), isNull(), eq("SUCCESS"));
     }
 
     @Test
     @DisplayName("logout() should not throw when user doesn't exist")
     void logout_WithNonExistentUser_ShouldNotThrow() {
-        // Arrange
+
+        /*
+         * ARRANGE: No user found with ID 999.
+         */
         when(userRepo.findById(999)).thenReturn(Optional.empty());
 
-        // Act & Assert: Should not throw any exception
+        /*
+         * ASSERT: assertDoesNotThrow is the opposite of assertThrows.
+         * It checks that the code runs WITHOUT throwing any exception.
+         *
+         * If a user doesn't exist, logout should silently do nothing,
+         * not crash with an error!
+         */
         assertDoesNotThrow(() -> authService.logout(999));
 
-        // Verify: No audit log should be created
+        /*
+         * Also verify no audit log was created - there's no user to log for!
+         */
         verify(auditLogService, never()).logAudit(any(), anyString(), anyString(), any(), any(), anyString());
     }
 
-    // ==================== CHANGE PASSWORD TESTS ====================
+    /*
+     * ==================== TESTS FOR changePassword() ====================
+     */
 
     @Test
     @DisplayName("changePassword() should update password when old password is correct")
     void changePassword_WithCorrectOldPassword_ShouldSucceed() {
-        // Arrange
+
+        /*
+         * ARRANGE: Full happy path for password change.
+         * - User exists
+         * - Old password matches
+         * - New password gets encoded
+         * - User gets saved
+         */
         when(userRepo.findById(1)).thenReturn(Optional.of(testUser));
         when(pwdEncoder.matches("oldPass", "encodedPassword123")).thenReturn(true);
         when(pwdEncoder.encode("newPass")).thenReturn("encodedNewPass");
         when(userRepo.save(any(User.class))).thenReturn(testUser);
 
-        // Act
+        /*
+         * ACT: Change the password.
+         */
         authService.changePassword(1, "oldPass", "newPass");
 
-        // Assert: Verify password was encoded and user was saved
+        /*
+         * ASSERT: Three things should have happened:
+         * 1. New password was encoded
+         * 2. User was saved with the new password
+         * 3. Audit log was created with action "PASSWORD_CHANGED"
+         */
         verify(pwdEncoder).encode("newPass");
         verify(userRepo).save(testUser);
         verify(auditLogService).logAudit(eq(testUser), eq("PASSWORD_CHANGED"), anyString(), eq("User"), eq(1), eq("SUCCESS"));
@@ -216,27 +303,39 @@ class AuthServiceTest {
     @Test
     @DisplayName("changePassword() should throw when old password is wrong")
     void changePassword_WithWrongOldPassword_ShouldThrowUnauthorizedException() {
-        // Arrange
+
+        /*
+         * ARRANGE: User exists but old password check fails.
+         */
         when(userRepo.findById(1)).thenReturn(Optional.of(testUser));
         when(pwdEncoder.matches("wrongOldPass", "encodedPassword123")).thenReturn(false);
 
-        // Act & Assert
         UnauthorizedException exception = assertThrows(
                 UnauthorizedException.class,
                 () -> authService.changePassword(1, "wrongOldPass", "newPass")
         );
 
         assertEquals("Current password is incorrect", exception.getMessage());
+
+        /*
+         * Critical check: The user should NOT be saved if the old password was wrong!
+         * We never want to overwrite a password when the user couldn't prove who they are.
+         */
         verify(userRepo, never()).save(any());
     }
 
     @Test
     @DisplayName("changePassword() should throw when user is not found")
     void changePassword_WithNonExistentUser_ShouldThrowUnauthorizedException() {
-        // Arrange
+
+        /*
+         * ARRANGE: No user found with ID 999.
+         */
         when(userRepo.findById(999)).thenReturn(Optional.empty());
 
-        // Act & Assert
+        /*
+         * ASSERT: Should throw an exception - can't change password for a non-existent user!
+         */
         assertThrows(
                 UnauthorizedException.class,
                 () -> authService.changePassword(999, "oldPass", "newPass")
