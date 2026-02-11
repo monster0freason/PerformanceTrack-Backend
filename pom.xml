@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+<!--
+    This is a POM file (Project Object Model) - think of it as a recipe book for your project.
+    It tells Maven (a build tool) what ingredients (dependencies) your project needs,
+    what version of Java to use, and how to build and package your application.
+
+    Maven is like a smart assistant that downloads all the libraries you need
+    and manages them for you, so you don't have to manually download JAR files.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        This section says: "My project is based on Spring Boot"
+        Spring Boot is like a starter kit that comes with lots of pre-configured tools.
+        We're using version 3.2.1 of Spring Boot as our foundation.
+
+        Think of this as saying "I'm building a house using this specific blueprint system"
+    -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -8,61 +29,171 @@
         <relativePath/>
     </parent>
 
+    <!--
+        This identifies YOUR specific project.
+        - groupId: Usually your company/organization name (like a last name)
+        - artifactId: The project name (like a first name)
+        - version: Current version of your project (SNAPSHOT means "work in progress")
+
+        Together these create a unique identifier: com.project:performanceTrack:0.0.1-SNAPSHOT
+    -->
     <groupId>com.project</groupId>
     <artifactId>performanceTrack</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>performanceTrack</name>
     <description>Performance Review and Goal Management System</description>
 
+    <!--
+        These are project-wide settings that we can reuse throughout the file.
+        Instead of writing "21" and "1.18.30" multiple times, we define them once here.
+
+        It's like setting variables at the top of a program.
+    -->
     <properties>
         <java.version>21</java.version>
         <lombok.version>1.18.30</lombok.version>
     </properties>
 
+    <!--
+        DEPENDENCIES SECTION
+
+        This is the shopping list of external libraries our project needs.
+        Each <dependency> is like saying "I need this tool to build my application"
+        Maven will automatically download these from the internet.
+    -->
     <dependencies>
+
+        <!--
+            Spring Boot Web Starter
+            This gives you everything needed to build a web application:
+            - Web server (Tomcat)
+            - REST API support
+            - JSON handling
+            Think of it as "everything you need to handle HTTP requests"
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!--
+            Spring Boot Data JPA Starter
+            This helps you talk to databases easily.
+            - JPA: A way to map Java objects to database tables
+            - Hibernate: Does the actual database work behind the scenes
+            Instead of writing SQL, you can just save Java objects!
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
+        <!--
+            Spring Security Starter
+            This is your security guard - handles:
+            - User authentication (who are you?)
+            - Authorization (what are you allowed to do?)
+            - Password encryption
+            - Protecting endpoints from unauthorized access
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+
+        <!--
+            Validation Starter
+            Helps you validate data automatically.
+            For example, check if an email is valid, if a field is required, etc.
+            Uses annotations like @NotNull, @Email, @Size
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+
+        <!--
+            Actuator Starter
+            This is like a health monitoring dashboard for your app.
+            It provides endpoints to check:
+            - Is my app healthy?
+            - How much memory am I using?
+            - What endpoints are available?
+            Useful for production monitoring!
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!--
+            MySQL Connector
+            This is the driver that lets Java talk to MySQL database.
+            Think of it as a translator between Java and MySQL.
+
+            scope=runtime means: "Only needed when running, not when compiling"
+        -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!--
+            Lombok
+            This is a code generator that saves you from writing boring code.
+            Instead of writing getters, setters, constructors manually,
+            you just use annotations like @Getter, @Setter, @Data
+
+            optional=true means: "Other projects don't need to know about this"
+        -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
+
+        <!--
+            ModelMapper
+            This copies data between objects automatically.
+            For example, converting a User entity to a UserDTO without
+            manually copying each field one by one.
+            It's like a smart copy-paste tool for objects.
+        -->
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>3.2.0</version>
         </dependency>
+
+        <!--
+            Dotenv
+            This reads environment variables from a .env file.
+            Useful for storing secrets like database passwords
+            without hardcoding them in your source code.
+
+            Example: Instead of password="secret123" in code,
+            you read it from .env file: DB_PASSWORD=secret123
+        -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
             <version>3.0.0</version>
         </dependency>
 
+        <!--
+            JWT (JSON Web Token) Dependencies
+
+            These three dependencies work together for JWT authentication:
+            1. jjwt-api: The main interface (what you use in your code)
+            2. jjwt-impl: The actual implementation (how it works)
+            3. jjwt-jackson: Converts JWT to/from JSON
+
+            JWT is used for stateless authentication - the user gets a token
+            after login, and sends it with each request instead of username/password.
+            Think of it like a movie ticket - you show it once to prove you paid.
+        -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -81,12 +212,32 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!--
+            DevTools
+            This makes development faster by:
+            - Automatically restarting your app when you change code
+            - Disabling caching during development
+            - Providing better error pages
+
+            scope=runtime and optional=true means: "Only use this during development,
+            don't include it in the final production build"
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
+
+        <!--
+            Spring Boot Test Starter
+            Everything you need for testing:
+            - JUnit: Writing test cases
+            - Mockito: Creating fake objects for testing
+            - AssertJ: Better assertions
+
+            scope=test means: "Only needed when running tests, not in production"
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -94,7 +245,23 @@
         </dependency>
     </dependencies>
 
+    <!--
+        PROFILES SECTION
+
+        Profiles let you have different configurations for different environments.
+        Think of it like having different outfits for different occasions:
+        - "dev" profile: For local development (relaxed settings, debug mode)
+        - "prod" profile: For production server (strict settings, optimized)
+    -->
     <profiles>
+
+        <!--
+            Development Profile
+
+            activeByDefault=true means: "Use this profile if none is specified"
+            This sets spring.profiles.active=dev, which tells Spring Boot to use
+            application-dev.properties or application-dev.yml configuration file.
+        -->
         <profile>
             <id>dev</id>
             <activation>
@@ -104,6 +271,13 @@
                 <spring.profiles.active>dev</spring.profiles.active>
             </properties>
         </profile>
+
+        <!--
+            Production Profile
+
+            To use this, you'd run: mvn clean install -Pprod
+            The -Pprod flag activates this profile, which uses production settings.
+        -->
         <profile>
             <id>prod</id>
             <properties>
@@ -112,8 +286,25 @@
         </profile>
     </profiles>
 
+    <!--
+        BUILD SECTION
+
+        This tells Maven HOW to build your project.
+        Plugins are like power tools that perform specific build tasks.
+    -->
     <build>
         <plugins>
+
+            <!--
+                Spring Boot Maven Plugin
+
+                This is the magic plugin that packages your app into a runnable JAR file.
+                A JAR (Java Archive) is like a zip file containing your compiled code
+                and all dependencies - you can run it with just: java -jar myapp.jar
+
+                The excludes section says: "Don't include Lombok in the final JAR"
+                Why? Because Lombok only helps during compilation, not at runtime.
+            -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -126,6 +317,17 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!--
+                Maven Compiler Plugin
+
+                This compiles your Java code.
+                The special part here is the annotationProcessorPaths section,
+                which tells the compiler: "Hey, Lombok needs to process annotations
+                during compilation to generate code"
+
+                Without this, Lombok's @Getter, @Setter, etc. wouldn't work!
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
